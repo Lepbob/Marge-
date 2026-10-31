@@ -180,6 +180,8 @@ select.field,input.field,textarea.field{border:1px solid var(--line);background:
 .free-chip{border:1px dashed color-mix(in srgb,var(--accent) 50%,transparent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:4px 9px;font:500 12px var(--mono);text-align:center}
 .mob{display:none}
 .rows:has(.row.hw){border-top:0;gap:8px}
+.persolist{display:flex;flex-direction:column;gap:6px}
+.setrow.chk{gap:8px;font-size:14px}
 .echbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;text-decoration:none;color:var(--fg);padding:6px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg-hover)}
 .echlab{font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:2px}
 .echchip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:600;background:color-mix(in srgb,var(--s) 28%,var(--bg));border:1px solid color-mix(in srgb,var(--s) 60%,var(--bg));white-space:nowrap}
@@ -192,6 +194,7 @@ select.field,input.field,textarea.field{border:1px solid var(--line);background:
 .lkrow .band{width:4px;align-self:stretch;border-radius:3px;background:var(--p);flex:none}
 .lkrow .lt{flex:1;min-width:0;overflow-wrap:anywhere}
 .lkrow.done .lt{text-decoration:line-through;opacity:.6}
+.ev.sc.perso{background:color-mix(in srgb,var(--muted) 14%,var(--bg));border:1px dashed color-mix(in srgb,var(--muted) 55%,var(--bg));border-left:5px solid var(--muted)}
 .row.hw{grid-template-columns:5px auto minmax(0,1fr) auto;gap:4px 10px;padding:10px 12px 10px 0;border:1px solid color-mix(in srgb,var(--s) 42%,var(--bg));border-radius:14px;background:color-mix(in srgb,var(--s) var(--tint),var(--bg));overflow:hidden}
 .row.hw:hover{background:color-mix(in srgb,var(--s) calc(var(--tint) + 5%),var(--bg))}
 .row.hw .band{align-self:stretch;width:5px;margin:-10px 0;background:var(--p)}
@@ -777,6 +780,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       var u=c.sub?state.subjects.filter(function(y){return y.id===c.sub})[0]:null;
       out.push({id:c.id,custom:true,title:c.title||(u?u.name:'Cours'),kind:kindFor(c.kind,c.room),a:c.a,b:c.b,room:c.room||'',color:u?u.color:'gray',sid:u?u.id:'',noCode:!u});
     });
+    persoOn(d).forEach(function(e){out.push({perso:true,title:e.title,kind:'',a:e.a,b:e.b,room:e.room||'',color:'gray',sid:'',noCode:true})});
     out.sort(function(x,y){return x.a<y.a?-1:x.a>y.a?1:0});
     return out;
   }
@@ -865,7 +869,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       blocks+=free;
       evs.forEach(function(c){
         var e=c.e,h=yOf(c.f)-yOf(c.s)-2,w=100/c.lanes,past=parse(di,e.b)<now;
-        blocks+='<div class="ev sc'+(past?' past':'')+'" style="--s:'+hexOf(e.color)+';top:'+yOf(c.s)+'px;height:'+h+'px;left:calc('+(c.lane*w)+'% + 0px);width:calc('+w+'% - 2px)">'+evInner(e,di,h<84)+'</div>';
+        blocks+='<div class="ev sc'+(past?' past':'')+(e.perso?' perso':'')+'" style="--s:'+hexOf(e.color)+';top:'+yOf(c.s)+'px;height:'+h+'px;left:calc('+(c.lane*w)+'% + 0px);width:calc('+w+'% - 2px)">'+evInner(e,di,h<84)+'</div>';
       });
       timedPlans.forEach(function(it){
         var s0=toMin(it.planTime),d0=it.dur||60,ov=evs.some(function(c){return c.s<s0+d0&&c.f>s0});
@@ -881,7 +885,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         pe=pe===null?m.f:Math.max(pe,m.f);
         if(m.it){mlist+=planHtml(m.it,false);return}
         var e=m.c.e,past=parse(di,e.b)<now;
-        mlist+='<div class="ev sc'+(past?' past':'')+'" style="--s:'+hexOf(e.color)+'">'+evInner(e,di,false)+'</div>';
+        mlist+='<div class="ev sc'+(past?' past':'')+(e.perso?' perso':'')+'" style="--s:'+hexOf(e.color)+'">'+evInner(e,di,false)+'</div>';
       });
       mob+='<div class="'+cls+'">'+headTxt+(load?'<div class="load">Prévu : '+fmtDur(load)+'</div>':'')+mlist+flags.map(flagHtml).join('')+untimed.map(function(it){return planHtml(it,false)}).join('')+'</div>';
     }
@@ -889,7 +893,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var subt=loading?'Chargement de ton calendrier…':(calNotice()||'Lu depuis ton calendrier de la fac dans Google Agenda.');
     var nHidden=Object.keys(state.evOver||{}).filter(function(k){return state.evOver[k].hide}).length;
     var restore=nHidden?'<p class="hint" style="margin:-6px 0 12px">'+nHidden+' cours masqué'+(nHidden>1?'s':'')+' · <button class="linkbtn" data-act="ev-restore">Tout rétablir</button></p>':'';
-    return sampleBanner()+head('Planning',subt,'Ajouter un cours','add-ev')+restore+
+    return sampleBanner()+head('Planning',subt,'Ajouter un événement','add-ev')+restore+
       '<div class="weeknav"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Semaine précédente">'+icon('left')+'</button>'+
       '<b style="min-width:150px;text-align:center">'+esc(title)+'</b>'+
       '<button class="icon-btn" data-act="week" data-v="1" aria-label="Semaine suivante">'+icon('right')+'</button>'+
@@ -951,6 +955,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         var opts='<option value="">Choisir un calendrier…</option>'+(cloud.calList||[]).map(function(c){return '<option value="'+esc(c.id)+'"'+(state.settings.schoolCal===c.id?' selected':'')+'>'+esc(c.summary)+(c.primary?' (principal)':'')+'</option>'}).join('');
         body='<div class="setrow"><span class="tag t-green">Connecté</span></div>'+
           '<div class="setrow"><label for="set-cal">Calendrier de la fac</label><select class="field" id="set-cal">'+opts+'</select></div>'+
+          persoPanel()+
           (state.settings.schoolCal?'<div class="setrow"><button class="btn" data-act="import-subs">Importer les matières depuis l\'agenda</button></div><p class="hint">'+(cloud.importMsg?esc(cloud.importMsg)+' ':'')+'Les matières sont créées à partir du nom des cours (CM, TD et salles sont retirés) et enregistrées dans ta base.</p>':'')+
           '<p class="hint">Les alertes de deadline sont créées dans ton agenda principal.'+(pend?' '+pend+' devoir'+(pend>1?'s':'')+' en attente d\'ajout à l\'agenda.':' Tous tes devoirs sont à jour dans l\'agenda.')+'</p>'+
           '<div><button class="btn" data-act="sync-now">'+icon('refresh',16)+'Synchroniser maintenant</button></div>';
@@ -970,7 +975,36 @@ a.google-btn,a.icon-btn{text-decoration:none}
   var calCache=loadCalCache(),calLoading={},calFail={},syncing=false;
   function loadCalCache(){try{return JSON.parse(localStorage.getItem(CAL_KEY)||'{}')||{}}catch(e){return {}}}
   function saveCalCache(){try{localStorage.setItem(CAL_KEY,JSON.stringify(calCache))}catch(e){}}
-  function resetCal(){calCache={};calFail={};saveCalCache()}
+  var PER_KEY='hubfac-percache',persoCache=(function(){try{return JSON.parse(localStorage.getItem(PER_KEY)||'{}')||{}}catch(e){return {}}})(),persoLoading={},persoFail={};
+  function savePerso(){try{localStorage.setItem(PER_KEY,JSON.stringify(persoCache))}catch(e){}}
+  function resetCal(){calCache={};calFail={};saveCalCache();persoCache={};persoFail={};savePerso()}
+  function persoIds(){
+    var st=state.settings,l=st.persoCals;
+    if(!l){var pr=(cloud.calList||[]).filter(function(c){return c.primary})[0];l=[pr?pr.id:'primary']}
+    return l.filter(function(id){return id&&id!==st.schoolCal})
+  }
+  function loadPerso(ws){
+    var key=iso(ws),ids=persoIds();
+    if(persoLoading[key]||!cloud.user||!tokenOk()||!ids.length||(persoFail[key]&&Date.now()-persoFail[key]<60000))return;
+    persoLoading[key]=1;
+    var q='/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin='+encodeURIComponent(ws.toISOString())+'&timeMax='+encodeURIComponent(addDays(ws,7).toISOString());
+    Promise.all(ids.map(function(id){return gapi('/calendars/'+encodeURIComponent(id)+q)})).then(function(res){
+      var by={};
+      res.forEach(function(j){(j.items||[]).forEach(function(ev){
+        if(!ev.start||!ev.start.dateTime||!ev.end||!ev.end.dateTime||ev.status==='cancelled')return;
+        if(/depuis Studia/.test(ev.description||''))return;
+        var a=new Date(ev.start.dateTime),b=new Date(ev.end.dateTime),di=iso(a);
+        (by[di]=by[di]||[]).push({title:ev.summary||'Événement',a:hm(a),b:(iso(b)!==di||b<=a)?'23:59':hm(b),room:ev.location||''});
+      })});
+      Object.keys(by).forEach(function(k){by[k].sort(function(x,y){return x.a<y.a?-1:x.a>y.a?1:0})});
+      persoCache[key]={by:by,at:Date.now(),sig:ids.join(',')};savePerso();delete persoFail[key];
+    }).catch(function(e){persoFail[key]=Date.now();cloud.calError=friendly(e)}).then(function(){delete persoLoading[key];render()});
+  }
+  function persoOn(d){
+    var ws=weekStartOf(d),key=iso(ws),en=persoCache[key];
+    if(cloud.user&&tokenOk()&&(!en||en.sig!==persoIds().join(',')||Date.now()-en.at>600000))loadPerso(ws);
+    return en?(en.by[iso(d)]||[]):[];
+  }
 
   function tokenOk(){return !!cloud.token&&Date.now()<cloud.tokenExp}
   function setToken(t,sec){cloud.token=t;cloud.tokenExp=Date.now()+((sec>0?sec:3600)-120)*1000;try{localStorage.setItem(TOK_KEY,JSON.stringify({t:t,e:cloud.tokenExp}))}catch(e){}}
@@ -1205,6 +1239,12 @@ a.google-btn,a.icon-btn{text-decoration:none}
       state=normalize(obj);state.sample=false;state.updatedAt=Date.now();
       persistLocal();cloudPush();resetCal();BK.msg='Sauvegarde restaurée.';
     }).catch(function(e){BK.msg=friendly(e)}).then(function(){BK.busy=false;render()});
+  }
+  function persoPanel(){
+    var on=persoIds(),l=(cloud.calList||[]).filter(function(c){return c.id!==state.settings.schoolCal});
+    if(!l.length)return '';
+    return '<div class="persolist"><b>Mes agendas perso</b><p class="hint">Leurs événements s\'affichent en gris dans le Planning (lecture seule, rien n\'est modifié dans Google) pour bien voir ton temps libre. Ceux créés par Studia sont ignorés.</p>'+
+      l.map(function(c){return '<label class="setrow chk"><input type="checkbox" data-percal="'+esc(c.id)+'"'+(on.indexOf(c.id)>=0?' checked':'')+'> '+esc(c.summary)+(c.primary?' (principal)':'')+'</label>'}).join('')+'</div>';
   }
   function backupPanel(){
     var last='';try{last=localStorage.getItem('studia-lastbackup')||''}catch(e){}
@@ -1564,6 +1604,10 @@ a.google-btn,a.icon-btn{text-decoration:none}
     if(t.id==='f-sub'){refreshSlotSelect();return}
     if(t.id==='f-kind'){var we=document.getElementById('w-ech');if(we)we.hidden=(t.value==='cc'||t.value==='exam');return}
     if(t.id==='set-gcid'){state.settings.gClientId=t.value.trim();gis=null;save();render();return}
+    if(t.getAttribute&&t.getAttribute('data-percal')!==null){
+      state.settings.persoCals=[].slice.call(document.querySelectorAll('[data-percal]')).filter(function(x){return x.checked}).map(function(x){return x.getAttribute('data-percal')});
+      persoCache={};persoFail={};savePerso();save();render();return;
+    }
     if(t.id==='set-cal'){state.settings.schoolCal=t.value;state.settings.imported='';importTried='';cloud.importMsg='';resetCal();save();render();return}
     var sid=t.getAttribute&&t.getAttribute('data-sub');
     if(sid){
