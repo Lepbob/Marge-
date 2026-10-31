@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Studia</title>
+<title>Marge</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -25,23 +25,23 @@
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-  --bg:#0e1318; --bg-soft:#19212b; --bg-hover:#243040;
-  --fg:#eaf0f6; --muted:#a7b5c5; --line:#2a3644; --accent:#6db6ff; --accent-soft:#16304a; --on-accent:#08131f; --amber:#ffb020;
-  --hi:#ff6b6b; --mid:#ffc247; --lo:#5ed68f; --alert:#ff6b6b; --tint:20%;
-  --red-bg:#6e2621; --red-fg:#ffd3cf; --orange-bg:#6a3f14; --orange-fg:#ffdcae;
-  --green-bg:#23472c; --green-fg:#c2ecca; --blue-bg:#1f4560; --blue-fg:#c4e4f8;
-  --purple-bg:#3f2d5c; --purple-fg:#e6d6fb; --gray-bg:#382c4a; --gray-fg:#ddd6e8;
+  --bg:#161c23; --bg-soft:#1d252e; --bg-hover:#27313c;
+  --fg:#d8e0e9; --muted:#97a5b5; --line:#29333e; --accent:#7db4ee; --accent-soft:#1d3550; --on-accent:#0b1520; --amber:#e3a56a;
+  --hi:#e87878; --mid:#e5b455; --lo:#6fbf92; --alert:#e87878; --tint:12%;
+  --red-bg:#5a2a2c; --red-fg:#ffc9c9; --orange-bg:#5a3d1c; --orange-fg:#f5d3a8;
+  --green-bg:#264a35; --green-fg:#bfe6d0; --blue-bg:#23435f; --blue-fg:#c4e0f8;
+  --purple-bg:#38305a; --purple-fg:#ddd3f7; --gray-bg:#2e3844; --gray-fg:#cfd8e2;
   --shadow:0 8px 30px rgba(0,0,0,.6);
   color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0e1318; --bg-soft:#19212b; --bg-hover:#243040;
-  --fg:#eaf0f6; --muted:#a7b5c5; --line:#2a3644; --accent:#6db6ff; --accent-soft:#16304a; --on-accent:#08131f; --amber:#ffb020;
-  --hi:#ff6b6b; --mid:#ffc247; --lo:#5ed68f; --alert:#ff6b6b; --tint:20%;
-  --red-bg:#6e2621; --red-fg:#ffd3cf; --orange-bg:#6a3f14; --orange-fg:#ffdcae;
-  --green-bg:#23472c; --green-fg:#c2ecca; --blue-bg:#1f4560; --blue-fg:#c4e4f8;
-  --purple-bg:#3f2d5c; --purple-fg:#e6d6fb; --gray-bg:#382c4a; --gray-fg:#ddd6e8;
+  --bg:#161c23; --bg-soft:#1d252e; --bg-hover:#27313c;
+  --fg:#d8e0e9; --muted:#97a5b5; --line:#29333e; --accent:#7db4ee; --accent-soft:#1d3550; --on-accent:#0b1520; --amber:#e3a56a;
+  --hi:#e87878; --mid:#e5b455; --lo:#6fbf92; --alert:#e87878; --tint:12%;
+  --red-bg:#5a2a2c; --red-fg:#ffc9c9; --orange-bg:#5a3d1c; --orange-fg:#f5d3a8;
+  --green-bg:#264a35; --green-fg:#bfe6d0; --blue-bg:#23435f; --blue-fg:#c4e0f8;
+  --purple-bg:#38305a; --purple-fg:#ddd3f7; --gray-bg:#2e3844; --gray-fg:#cfd8e2;
   --shadow:0 8px 30px rgba(0,0,0,.6);
   color-scheme:dark;
 }
@@ -286,6 +286,9 @@ a.google-btn,a.icon-btn{text-decoration:none}
   .mob .day{gap:6px}
   .row{grid-template-columns:auto minmax(0,1fr)}
   .row .side-cell{grid-column:2;flex-wrap:wrap}
+  .row.hw{grid-template-columns:5px auto minmax(0,1fr)}
+  .row.hw .band{grid-row:1 / span 2}
+  .row.hw .side-cell{grid-column:3}
   .course{grid-template-columns:84px minmax(0,1fr)}
 }
 @media (prefers-reduced-motion:no-preference){.btn,.nav-item,.row{transition:background .12s}}
@@ -297,7 +300,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   <aside class="side" id="side"></aside>
   <main class="main">
     <div class="topbar">
-      <div class="brand" style="padding:0" id="brand-m">Studia</div>
+      <div class="brand" style="padding:0" id="brand-m">Marge</div>
       <div style="display:flex;gap:2px"><a class="icon-btn" href="#reglages" aria-label="Réglages" id="gear-m"></a>
       <button class="icon-btn" data-act="theme" aria-label="Changer de thème" id="theme-m"></button></div>
     </div>
@@ -318,7 +321,12 @@ a.google-btn,a.icon-btn{text-decoration:none}
   var DAYS=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
   var PALETTE=['#e07a1f','#e5484d','#d6336c','#ab47bc','#7b4fd0','#4f5bd5','#2f7fe0','#0e9aa7','#1fa06a','#6baa2a','#c9a800','#f0a020','#8d6e63','#607d8b','#37474f'];
   var COLORS=PALETTE,NAMEHEX={blue:'#2f7fe0',purple:'#7b4fd0',green:'#1fa06a',orange:'#e07a1f',red:'#e5484d',gray:'#607d8b'};
-  function hexOf(c){return /^#[0-9a-f]{6}$/i.test(c||'')?c:(NAMEHEX[c]||NAMEHEX.gray)}
+  function hexOf(c){
+    var h=/^#[0-9a-f]{6}$/i.test(c||'')?c:(NAMEHEX[c]||NAMEHEX.gray);
+    if(!isDark())return h;
+    var m=[1,3,5].map(function(i,k){return Math.round(parseInt(h.substr(i,2),16)*.7+[200,208,218][k]*.3)});
+    return '#'+m.map(function(v){return (v<16?'0':'')+v.toString(16)}).join('');
+  }
   var STATES=[{k:'todo',l:'À rattraper',c:'red'},{k:'doing',l:'En cours',c:'orange'},{k:'done',l:'Rattrapé',c:'green'}];
   var PRIO={high:{l:'Difficile',v:'var(--hi)'},mid:{l:'Moyen',v:'var(--mid)'},low:{l:'Facile',v:'var(--lo)'}};
   var REMIND={eve:'La veille',d3:'3 jours avant',same:'Le matin même',none:'Aucun rappel'};
@@ -354,7 +362,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     left:'<path d="M15 5l-7 7 7 7"/>',right:'<path d="M9 5l7 7-7 7"/>',
     g:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/>'
   };
-  function logo(n){return '<svg width="'+n+'" height="'+n+'" viewBox="0 0 100 100" role="img" aria-label="Studia" style="flex:none"><rect width="100" height="100" rx="30" fill="#0b5fc4"/><path d="M64 36 C64 25 36 25 36 40 C36 54 64 50 64 64 C64 79 36 79 36 68" fill="none" stroke="#fff" stroke-width="9.5" stroke-linecap="round"/><circle cx="74" cy="24" r="6.5" fill="#ffb020"/></svg>'}
+  function logo(n){return '<svg width="'+n+'" height="'+n+'" viewBox="0 0 100 100" role="img" aria-label="Marge" style="flex:none"><rect x="2" y="2" width="96" height="96" rx="24" fill="#1b232c" stroke="#2c3743" stroke-width="1.5"/><path d="M26 18V82" stroke="#e58e8e" stroke-width="4.5" stroke-linecap="round"/><path d="M37 33L43 39L53 26" stroke="#6fcba0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M60 33H78" stroke="#7db4ee" stroke-width="6" stroke-linecap="round"/><circle cx="42" cy="52" r="5" stroke="#d8e0e9" stroke-width="3.5" fill="none" opacity=".75"/><path d="M56 52H76" stroke="#d8e0e9" stroke-width="6" stroke-linecap="round" opacity=".8"/><circle cx="42" cy="70" r="5" stroke="#d8e0e9" stroke-width="3.5" fill="none" opacity=".5"/><path d="M56 70H72" stroke="#d8e0e9" stroke-width="6" stroke-linecap="round" opacity=".55"/></svg>'}
   function icon(n,s){s=s||18;return '<svg width="'+s+'" height="'+s+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICONS[n]+'</svg>'}
 
   /* ---------- Données d'exemple ---------- */
@@ -992,7 +1000,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       var by={};
       res.forEach(function(j){(j.items||[]).forEach(function(ev){
         if(!ev.start||!ev.start.dateTime||!ev.end||!ev.end.dateTime||ev.status==='cancelled')return;
-        if(/depuis Studia/.test(ev.description||''))return;
+        if(/depuis (Studia|Marge)/.test(ev.description||''))return;
         var a=new Date(ev.start.dateTime),b=new Date(ev.end.dateTime),di=iso(a);
         (by[di]=by[di]||[]).push({title:ev.summary||'Événement',a:hm(a),b:(iso(b)!==di||b<=a)?'23:59':hm(b),room:ev.location||''});
       })});
@@ -1166,7 +1174,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   }
   function planEvBody(it){
     var st=parse(it.planDate,it.planTime),en=new Date(st.getTime()+(it.dur||60)*6e4);
-    return {summary:'À faire : '+it.title+(it.sid?' ('+it.h.title+')':'')+' · '+sub(it.h.sub).name,description:'Travail planifié depuis Studia',start:{dateTime:st.toISOString()},end:{dateTime:en.toISOString()},reminders:{useDefault:false,overrides:[{method:'popup',minutes:10}]}};
+    return {summary:'À faire : '+it.title+(it.sid?' ('+it.h.title+')':'')+' · '+sub(it.h.sub).name,description:'Travail planifié depuis Marge',start:{dateTime:st.toISOString()},end:{dateTime:en.toISOString()},reminders:{useDefault:false,overrides:[{method:'popup',minutes:10}]}};
   }
   function planSig(it){return [it.planDate,it.planTime,it.dur,it.title,it.h.title,it.h.sub].join('|')}
   function tapi(path,method,body){
@@ -1243,7 +1251,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   function persoPanel(){
     var on=persoIds(),l=(cloud.calList||[]).filter(function(c){return c.id!==state.settings.schoolCal});
     if(!l.length)return '';
-    return '<div class="persolist"><b>Mes agendas perso</b><p class="hint">Leurs événements s\'affichent en gris dans le Planning (lecture seule, rien n\'est modifié dans Google) pour bien voir ton temps libre. Ceux créés par Studia sont ignorés.</p>'+
+    return '<div class="persolist"><b>Mes agendas perso</b><p class="hint">Leurs événements s\'affichent en gris dans le Planning (lecture seule, rien n\'est modifié dans Google) pour bien voir ton temps libre. Ceux créés par Marge sont ignorés.</p>'+
       l.map(function(c){return '<label class="setrow chk"><input type="checkbox" data-percal="'+esc(c.id)+'"'+(on.indexOf(c.id)>=0?' checked':'')+'> '+esc(c.summary)+(c.primary?' (principal)':'')+'</label>'}).join('')+'</div>';
   }
   function backupPanel(){
@@ -1305,7 +1313,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         if(needsTask(h)){
           return tapi('/lists/@default/tasks','POST',{
             title:(KIND_SUM[h.kind||'devoir'])+' : '+h.title+' ('+sub(h.sub).name+')'+(h.date?' · pour le '+fmtShort.format(parse(h.date))+(h.time&&h.time!=='23:59'?' à '+h.time:''):''),
-            notes:'Ajouté depuis Studia',
+            notes:'Ajouté depuis Marge',
             due:taskDue(h)
           }).then(function(j){h.taskId=j.id;changed=true}).catch(function(e){if(e.tasks){cloud.calError=friendly(e);return}throw e});
         }
@@ -1314,7 +1322,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
           if(mins.indexOf(60)<0)mins.push(60);
           return gapi('/calendars/primary/events','POST',{
             summary:(KIND_SUM[h.kind||'devoir'])+' : '+h.title+' ('+sub(h.sub).name+')',
-            description:'Ajouté depuis Studia',
+            description:'Ajouté depuis Marge',
             start:{dateTime:due.toISOString()},
             end:{dateTime:new Date(due.getTime()+15*6e4).toISOString()},
             reminders:{useDefault:false,overrides:mins.map(function(m){return {method:'popup',minutes:m}})}
@@ -1330,7 +1338,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   /* ---------- Rendu général ---------- */
   function renderSide(){
     var counts={devoirs:openHw().filter(function(h){return !isEch(h)}).length,echeances:openHw().filter(isEch).length,absences:openAbs().length};
-    var h='<div class="brand">'+logo(28)+'Studia</div>'+
+    var h='<div class="brand">'+logo(28)+'Marge</div>'+
       '<button class="nav-item" data-act="add" style="color:var(--fg)">'+icon('plus')+'Ajout rapide<span class="count">N</span></button><div class="nav-label">Pages</div>';
     VIEWS.forEach(function(v){
       h+='<a class="nav-item" href="#'+v.k+'"'+(view===v.k?' aria-current="page"':'')+'>'+icon(v.i)+v.l+(counts[v.k]?'<span class="count">'+counts[v.k]+'</span>':'')+'</a>';
@@ -1347,7 +1355,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       return '<a href="#'+v.k+'"'+(view===v.k?' aria-current="page"':'')+'>'+icon(v.i,20)+v.l.replace('Aujourd\'hui','Accueil')+'</a>';
     }).join('');
     document.getElementById('theme-m').innerHTML=icon(isDark()?'sun':'moon');
-    document.getElementById('brand-m').innerHTML=logo(28)+'Studia';
+    document.getElementById('brand-m').innerHTML=logo(28)+'Marge';
     document.getElementById('gear-m').innerHTML=icon('gear');
     document.getElementById('fab').innerHTML=icon('plus',24);
   }
@@ -1371,14 +1379,14 @@ a.google-btn,a.icon-btn{text-decoration:none}
     return window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;
   }
   try{var tv=localStorage.getItem(THEME_KEY);if(tv)document.documentElement.setAttribute('data-theme',tv)}catch(e){}
-  function syncThemeColor(){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',isDark()?'#0e1318':'#f6f8fa')}
+  function syncThemeColor(){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',isDark()?'#161c23':'#f6f8fa')}
   syncThemeColor();
   try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncThemeColor)}catch(e){}
   function toggleTheme(){
     var n=isDark()?'light':'dark';
     document.documentElement.setAttribute('data-theme',n);
     try{localStorage.setItem(THEME_KEY,n)}catch(e){}
-    syncThemeColor();renderSide();
+    syncThemeColor();render();
   }
 
   /* ---------- Ajout rapide ---------- */
@@ -1458,7 +1466,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       (custom?'<div class="two"><label>Date<input class="field" type="date" id="e-date" required value="'+esc(di||iso(new Date()))+'"></label><label>Début<input class="field" type="time" id="e-a" required value="'+esc(v.a)+'"></label></div>'+
         '<label>Fin<input class="field" type="time" id="e-b" required value="'+esc(v.b)+'"></label>':'')+
       (isNew?'<label>Répéter chaque semaine jusqu\'au (facultatif)<input class="field" type="date" id="e-until"></label>':'')+
-      (!custom?'<p class="hint">Ce cours vient de ton agenda de la fac. La modification ne change que Studia, jamais ton agenda Google.</p>':'');
+      (!custom?'<p class="hint">Ce cours vient de ton agenda de la fac. La modification ne change que Marge, jamais ton agenda Google.</p>':'');
     var extra=isNew?'':(custom?'<button type="button" class="btn" data-act="ev-del">Supprimer</button>':'<button type="button" class="btn" data-act="ev-del">Masquer</button>'+((state.evOver||{})[id]?'<button type="button" class="btn" data-act="ev-reset">Rétablir l\'original</button>':''));
     document.getElementById('modal-root').innerHTML='<div class="overlay"><form class="modal" id="ev-form" role="dialog" aria-modal="true" aria-label="'+head+'">'+
       '<div class="modal-head"><h2>'+head+'</h2><button type="button" class="icon-btn" data-act="close" aria-label="Fermer">'+icon('x',20)+'</button></div>'+
@@ -1623,7 +1631,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     if((e.key==='n'||e.key==='N')&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&tag!=='input'&&tag!=='textarea'&&tag!=='select'&&!document.getElementById('add-form')){e.preventDefault();openModal()}
   });
   window.addEventListener('hashchange',route);
-  if(window.matchMedia)try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderSide)}catch(e){}
+  if(window.matchMedia)try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render)}catch(e){}
   route();
   cloudInit();
 })();

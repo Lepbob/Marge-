@@ -1,7 +1,7 @@
 {
   "id": "studia-app",
-  "name": "Studia",
-  "short_name": "Studia",
+  "name": "Marge",
+  "short_name": "Marge",
   "description": "Devoirs, absences, planning et notes de la fac au même endroit.",
   "lang": "fr",
   "start_url": "./index.html",
