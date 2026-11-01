@@ -264,6 +264,8 @@ a.google-btn,a.icon-btn{text-decoration:none}
 .overlay{position:fixed;inset:0;background:rgba(15,15,15,.45);display:grid;place-items:center;padding:16px;z-index:50}
 .modal{background:var(--bg);border-radius:16px;box-shadow:var(--shadow);width:min(480px,100%);max-height:100%;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px;border:1px solid var(--line)}
 .modal h2{font-size:17px}
+.modal-head{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.modal-head:active{cursor:grabbing}
 .form{display:flex;flex-direction:column;gap:11px}
 .form label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted);min-width:0}
 .form .two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1495,6 +1497,28 @@ a.google-btn,a.icon-btn{text-decoration:none}
       '<div class="form">'+body+'</div><div class="form-actions">'+extra+'<button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn btn-primary">'+(isNew?'Ajouter':'Enregistrer')+'</button></div></form></div>';
   }
   function closeModal(){document.getElementById('modal-root').innerHTML=''}
+  /* fenêtres déplaçables par leur en-tête */
+  var drag=null;
+  document.addEventListener('pointerdown',function(e){
+    var hd=e.target.closest&&e.target.closest('.modal-head');
+    if(!hd||e.target.closest('button,a,input,select,textarea'))return;
+    var m=hd.closest('.modal');if(!m)return;
+    var cur=(m.style.transform.match(/-?[\d.]+/g)||[0,0]).map(Number);
+    drag={m:m,x:e.clientX,y:e.clientY,ox:cur[0]||0,oy:cur[1]||0,id:e.pointerId};
+    try{hd.setPointerCapture(e.pointerId)}catch(x){}
+    e.preventDefault();
+  });
+  document.addEventListener('pointermove',function(e){
+    if(!drag||e.pointerId!==drag.id)return;
+    var r=drag.m.getBoundingClientRect(),dx=e.clientX-drag.x,dy=e.clientY-drag.y,nx=drag.ox+dx,ny=drag.oy+dy;
+    var bx=drag.ox,by=drag.oy,cx=r.left-bx+nx,cy=r.top-by+ny;
+    /* garder au moins l'en-tête visible */
+    if(cx+r.width<60)nx+=60-(cx+r.width);if(cx>innerWidth-60)nx-=cx-(innerWidth-60);
+    if(cy<0)ny-=cy;if(cy>innerHeight-50)ny-=cy-(innerHeight-50);
+    drag.m.style.transform='translate('+nx+'px,'+ny+'px)';
+  });
+  function endDrag(e){if(drag&&e.pointerId===drag.id)drag=null}
+  document.addEventListener('pointerup',endDrag);document.addEventListener('pointercancel',endDrag);
 
   document.addEventListener('submit',function(e){
     if(e.target.id==='ev-form'){
