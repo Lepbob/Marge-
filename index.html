@@ -187,6 +187,15 @@ select.field,input.field,textarea.field{border:1px solid var(--line);background:
 .echchip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:1px 10px;font-size:12.5px;font-weight:600;background:color-mix(in srgb,var(--s) 28%,var(--bg));border:1px solid color-mix(in srgb,var(--s) 60%,var(--bg));white-space:nowrap}
 .echchip i{width:7px;height:7px;border-radius:50%;background:var(--s)}
 .echchip.late{border-color:var(--alert)}
+.plbar{margin-bottom:10px}
+.wk{font:400 11.5px var(--mono);color:var(--muted);margin-left:4px;font-weight:400}
+.tl .ev.sc{cursor:pointer}
+.tl .ev.sc.open{opacity:1;height:auto!important;overflow:visible;z-index:6;box-shadow:var(--shadow);background:linear-gradient(color-mix(in srgb,var(--s) 28%,transparent),color-mix(in srgb,var(--s) 28%,transparent)),var(--bg)}
+.echchip u{width:7px;height:7px;border-radius:50%;background:var(--s);display:inline-block;flex:none}
+.echchip.strong{background:color-mix(in srgb,var(--s) 36%,var(--bg))}
+.plbar .echchip{white-space:normal}
+.tl .ghost{position:absolute;left:0;right:0;border:1px dotted color-mix(in srgb,var(--muted) 60%,transparent);border-radius:8px;font:10.5px var(--mono);color:var(--muted);padding:2px 6px;z-index:1;pointer-events:none;overflow:hidden;line-height:1.2}
+.ghostchip{font:11.5px var(--mono);color:var(--muted);border:1px dotted color-mix(in srgb,var(--muted) 60%,transparent);border-radius:8px;padding:4px 8px}
 .echmore{font-size:12.5px;color:var(--muted);font-weight:600}
 .echwrap{display:flex;flex-direction:column;gap:6px}
 .lkdv{display:flex;flex-direction:column;gap:5px;margin-left:18px;padding-left:10px;border-left:2px solid var(--line)}
@@ -783,13 +792,15 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var cust=(state.customEvents||[]).filter(function(c){return c.date===di});
     if(base===null&&!cust.length)return null;
     var out=[];
-    (base||[]).forEach(function(e){var x=applyOver(e);if(x)out.push(x)});
+    var hid=[];
+    (base||[]).forEach(function(e){var x=applyOver(e);if(x)out.push(x);else hid.push({a:e.a,b:e.b,title:e.title})});
     cust.forEach(function(c){
       var u=c.sub?state.subjects.filter(function(y){return y.id===c.sub})[0]:null;
       out.push({id:c.id,custom:true,title:c.title||(u?u.name:'Cours'),kind:kindFor(c.kind,c.room),a:c.a,b:c.b,room:c.room||'',color:u?u.color:'gray',sid:u?u.id:'',noCode:!u});
     });
     persoOn(d).forEach(function(e){out.push({perso:true,title:e.title,kind:'',a:e.a,b:e.b,room:e.room||'',color:'gray',sid:'',noCode:true})});
     out.sort(function(x,y){return x.a<y.a?-1:x.a>y.a?1:0});
+    out.hidden=hid;
     return out;
   }
   function dayEventsRaw(d){
@@ -808,6 +819,8 @@ a.google-btn,a.icon-btn{text-decoration:none}
     }
     return [];
   }
+  var openEv={};
+  function isoWeek(d){var t=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())),dn=t.getUTCDay()||7;t.setUTCDate(t.getUTCDate()+4-dn);var y0=new Date(Date.UTC(t.getUTCFullYear(),0,1));return Math.ceil(((t-y0)/864e5+1)/7)}
   function vPlanning(){
     var ws=weekStart(),now=new Date(),todayIso=iso(now);
     var title=weekOffset===0?'Cette semaine':weekOffset===1?'Semaine prochaine':weekOffset===-1?'Semaine dernière':'Semaine du '+fmtShort.format(ws);
@@ -840,13 +853,14 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var t0=Math.floor(minS/60)*60,t1=Math.min(1440,Math.ceil(maxE/60)*60),hours=Math.max(1,(t1-t0)/60);
     var pph=Math.max(36,Math.min(64,Math.floor(560/hours))),TH=Math.round(hours*pph);
     var yOf=function(m){return Math.round((m-t0)/60*pph)};
-    var heads='<div></div>',strips='<div></div>',tls='',mob='',colw=[];
+    var heads='<div></div>',strips='<div></div>',tls='',mob='',colw=[],band=[];
     var axis='<div class="axis" style="height:'+TH+'px">';
     for(var hh=t0;hh<=t1;hh+=60)axis+='<span style="top:'+yOf(hh)+'px">'+pad(hh/60)+'h</span>';
     axis+='</div>';
     for(var k=0;k<n;k++){
       var day=addDays(ws,k),di=iso(day),isToday=di===todayIso,planned=dayData[k];
       var flags=state.homework.filter(function(h){return h.date===di&&!h.done&&!shown[h.id]});
+      flags.forEach(function(h){band.push({k:k,h:h})});
       var evl=all[k],timedPlans=planned.filter(function(it){return it.planTime}),untimed=planned.filter(function(it){return !it.planTime});
       var load=planned.reduce(function(t,it){return t+(+it.dur||0)},0);
       var narrow=k>=5&&!evl.length&&!flags.length&&!planned.length;
@@ -854,7 +868,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       var headTxt='<div class="day-head">'+(narrow?DAYS[k].slice(0,3)+'.':DAYS[k])+'<span>'+(narrow?String(day.getDate()):fmtShort.format(day))+'</span></div>';
       var cls='day'+(isToday?' today':'')+(narrow?' emptywk':'');
       heads+='<div class="'+cls+'">'+headTxt+'</div>';
-      strips+='<div class="'+cls+'">'+(load?'<div class="load">Prévu : '+fmtDur(load)+'</div>':'')+flags.map(flagHtml).join('')+untimed.map(function(it){return planHtml(it,false)}).join('')+'</div>';
+      strips+='<div class="'+cls+'">'+(load?'<div class="load">Prévu : '+fmtDur(load)+'</div>':'')+untimed.map(function(it){return planHtml(it,false)}).join('')+'</div>';
       /* chronologie */
       var blocks='';
       for(var hl2=t0;hl2<=t1;hl2+=60)blocks+='<div class="hl" style="top:'+yOf(hl2)+'px"></div>';
@@ -870,14 +884,17 @@ a.google-btn,a.icon-btn{text-decoration:none}
       flush();
       var free='',prevEnd=null;
       var busy=evs.map(function(c){return {s:c.s,f:c.f}}).concat(timedPlans.map(function(it){var a0=toMin(it.planTime);return {s:a0,f:a0+(it.dur||60)}})).sort(function(x,y){return x.s-y.s||x.f-y.f});
+      var dws=Math.max(t0,480),dwe=Math.min(t1,1200),fr=function(a0,b0){if(b0-a0>=45)free+='<div class="free" style="top:'+(yOf(a0)+2)+'px;height:'+(yOf(b0)-yOf(a0)-4)+'px">Libre · '+fmtDur(b0-a0)+'</div>'};
       busy.forEach(function(c){
-        if(prevEnd!==null&&c.s-prevEnd>=45)free+='<div class="free" style="top:'+(yOf(prevEnd)+2)+'px;height:'+(yOf(c.s)-yOf(prevEnd)-4)+'px">Libre · '+fmtDur(c.s-prevEnd)+'</div>';
+        if(prevEnd===null)fr(dws,c.s);else fr(prevEnd,c.s);
         prevEnd=prevEnd===null?c.f:Math.max(prevEnd,c.f);
       });
-      blocks+=free;
+      if(prevEnd!==null)fr(prevEnd,dwe);
+      var ghosts=(evl.hidden||[]).map(function(g){var g0=toMin(g.a),g1=toMin(g.b);return '<div class="ghost" style="top:'+yOf(g0)+'px;height:'+Math.max(18,yOf(g1)-yOf(g0))+'px" title="Cours masqué : '+esc(g.title)+'">masqué · '+esc(g.title)+'</div>'}).join('');
+      blocks+=free+ghosts;
       evs.forEach(function(c){
-        var e=c.e,h=yOf(c.f)-yOf(c.s)-2,w=100/c.lanes,past=parse(di,e.b)<now;
-        blocks+='<div class="ev sc'+(past?' past':'')+(e.perso?' perso':'')+'" style="--s:'+hexOf(e.color)+';top:'+yOf(c.s)+'px;height:'+h+'px;left:calc('+(c.lane*w)+'% + 0px);width:calc('+w+'% - 2px)">'+evInner(e,di,h<84)+'</div>';
+        var e=c.e,h=yOf(c.f)-yOf(c.s)-2,w=100/c.lanes,past=parse(di,e.b)<now,ekey=di+'|'+e.a+'|'+(e.id||e.title),eopen=!!openEv[ekey];
+        blocks+='<div class="ev sc'+(past?' past':'')+(e.perso?' perso':'')+(eopen?' open':'')+'" data-act="exp-ev" data-key="'+esc(ekey)+'" aria-expanded="'+eopen+'" style="--s:'+hexOf(e.color)+';top:'+yOf(c.s)+'px;min-height:'+h+'px;height:'+h+'px;left:calc('+(c.lane*w)+'% + 0px);width:calc('+w+'% - 2px)">'+evInner(e,di,eopen?false:h<84)+'</div>';
       });
       timedPlans.forEach(function(it){
         var s0=toMin(it.planTime),d0=it.dur||60,ov=evs.some(function(c){return c.s<s0+d0&&c.f>s0});
@@ -888,26 +905,31 @@ a.google-btn,a.icon-btn{text-decoration:none}
       /* liste (téléphone) */
       var mlist='',pe=null;
       var mit=evs.map(function(c){return {s:c.s,f:c.f,c:c}}).concat(timedPlans.map(function(it){var a0=toMin(it.planTime);return {s:a0,f:a0+(it.dur||60),it:it}})).sort(function(x,y){return x.s-y.s||x.f-y.f});
+      var mws=480,mwe=1200;
       mit.forEach(function(m){
+        if(pe===null&&m.s-mws>=45)mlist+='<div class="free-chip">Libre · '+mm2(mws)+' – '+mm2(m.s)+' · '+fmtDur(m.s-mws)+'</div>';
         if(pe!==null&&m.s-pe>=45)mlist+='<div class="free-chip">Libre · '+mm2(pe)+' – '+mm2(m.s)+' · '+fmtDur(m.s-pe)+'</div>';
         pe=pe===null?m.f:Math.max(pe,m.f);
         if(m.it){mlist+=planHtml(m.it,false);return}
         var e=m.c.e,past=parse(di,e.b)<now;
         mlist+='<div class="ev sc'+(past?' past':'')+(e.perso?' perso':'')+'" style="--s:'+hexOf(e.color)+'">'+evInner(e,di,false)+'</div>';
       });
-      mob+='<div class="'+cls+'">'+headTxt+(load?'<div class="load">Prévu : '+fmtDur(load)+'</div>':'')+mlist+flags.map(flagHtml).join('')+untimed.map(function(it){return planHtml(it,false)}).join('')+'</div>';
+      if(pe!==null&&mwe-pe>=45)mlist+='<div class="free-chip">Libre · '+mm2(pe)+' – '+mm2(mwe)+' · '+fmtDur(mwe-pe)+'</div>';
+      (evl.hidden||[]).forEach(function(g){mlist+='<div class="ghostchip">Cours masqué · '+esc(g.a)+' – '+esc(g.b)+' · '+esc(g.title)+'</div>'});
+      mob+='<div class="'+cls+'">'+headTxt+(load?'<div class="load">Prévu : '+fmtDur(load)+'</div>':'')+mlist+untimed.map(function(it){return planHtml(it,false)}).join('')+'</div>';
     }
     var colsCss='--cols:'+colw.join(' ');
+    var bandHtml=band.length?'<div class="echbar plbar"><i>Échéances</i>'+band.map(function(x){var h=x.h,tm=(h.time&&h.time!=='23:59')?' '+h.time:'';return '<span class="echchip'+((h.kind==='cc'||h.kind==='exam')?' strong':'')+'" style="--s:'+hexOf(sub(h.sub).color)+'" title="'+esc(h.title)+'"><u></u>'+DAYS[x.k].slice(0,3)+'.'+tm+' · '+esc(KIND_FLAG[h.kind]||'Devoir')+' · '+esc(h.title)+'</span>'}).join('')+'</div>':'';
     var subt=loading?'Chargement de ton calendrier…':(calNotice()||'Lu depuis ton calendrier de la fac dans Google Agenda.');
     var nHidden=Object.keys(state.evOver||{}).filter(function(k){return state.evOver[k].hide}).length;
     var restore=nHidden?'<p class="hint" style="margin:-6px 0 12px">'+nHidden+' cours masqué'+(nHidden>1?'s':'')+' · <button class="linkbtn" data-act="ev-restore">Tout rétablir</button></p>':'';
     return sampleBanner()+head('Planning',subt,'Ajouter un événement','add-ev')+restore+
       '<div class="weeknav"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Semaine précédente">'+icon('left')+'</button>'+
-      '<b style="min-width:150px;text-align:center">'+esc(title)+'</b>'+
+      '<b style="min-width:150px;text-align:center">'+esc(title)+' <small class="wk" title="Semaine '+isoWeek(ws)+' de l\'année">S'+isoWeek(ws)+'</small></b>'+
       '<button class="icon-btn" data-act="week" data-v="1" aria-label="Semaine suivante">'+icon('right')+'</button>'+
       (weekOffset!==0?'<button class="btn" data-act="week" data-v="0">Aujourd\'hui</button>':'')+
       (calReady()?'<button class="icon-btn" data-act="refresh-cal" aria-label="Actualiser le calendrier">'+icon('refresh',17)+'</button>':'')+'</div>'+
-      '<div class="desk" style="'+colsCss+'"><div class="tlg heads">'+heads+'</div><div class="tlg strips">'+strips+'</div><div class="tlg"><div>'+axis+'</div>'+tls+'</div></div>'+
+      bandHtml+'<div class="desk" style="'+colsCss+'"><div class="tlg heads">'+heads+'</div><div class="tlg strips">'+strips+'</div><div class="tlg"><div>'+axis+'</div>'+tls+'</div></div>'+
       '<div class="mob">'+mob+'</div>';
   }
 
@@ -1534,6 +1556,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var el=e.target.closest('[data-act]');if(!el)return;
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id'),val=el.getAttribute('data-v');
     if(act==='add')openModal();
+    else if(act==='exp-ev'){var kk=el.getAttribute('data-key');openEv[kk]=!openEv[kk];render()}
     else if(act==='add-ech'){window.__pk='cc';openModal('hw');window.__pk=''}
     else if(act==='add-ev')openEvModal('',iso(new Date()));
     else if(act==='edit-ev')openEvModal(el.getAttribute('data-evid'),el.getAttribute('data-date'));
