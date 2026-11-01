@@ -84,6 +84,7 @@ a{color:inherit}
 
 /* Main */
 .main{min-width:0;padding:44px max(16px,env(safe-area-inset-right,0px)) 80px max(16px,env(safe-area-inset-left,0px));}
+.page.wide{max-width:1500px}
 .page{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:24px;min-width:0}
 .sample{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:var(--accent-soft);color:var(--blue-fg);border-radius:12px;padding:8px 12px;font-size:13px}
 .sample button{border:0;background:none;text-decoration:underline;color:inherit;padding:0}
@@ -853,7 +854,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       dayData.push(pl);
     }
     var t0=Math.floor(minS/60)*60,t1=Math.min(1440,Math.ceil(maxE/60)*60),hours=Math.max(1,(t1-t0)/60);
-    var pph=Math.max(36,Math.min(64,Math.floor(560/hours))),TH=Math.round(hours*pph);
+    var avail=(window.innerWidth>=860)?Math.max(520,window.innerHeight-400):560,pph=Math.max(36,Math.min(84,Math.floor(avail/hours))),TH=Math.round(hours*pph);
     var yOf=function(m){return Math.round((m-t0)/60*pph)};
     var heads='<div></div>',strips='<div></div>',tls='',mob='',colw=[],band=[];
     var axis='<div class="axis" style="height:'+TH+'px">';
@@ -1386,7 +1387,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   function render(){
     var f={aujourdhui:vToday,devoirs:vHomework,echeances:vEch,absences:vAbsences,planning:vPlanning,matieres:vSubjects,reglages:vSettings};
     var focusId=document.activeElement&&document.activeElement.id;
-    document.getElementById('page').innerHTML=(f[view]||vToday)();
+    var pg=document.getElementById('page');pg.classList.toggle('wide',view==='planning');pg.innerHTML=(f[view]||vToday)();
     renderSide();
     if(focusId&&/^p-/.test(focusId)){var el=document.getElementById(focusId);if(el)el.focus()}
   }
