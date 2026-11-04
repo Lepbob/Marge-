@@ -547,7 +547,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       (addLabel?'<button class="btn btn-primary head-add'+(act?' always':'')+'" data-act="'+(act||'add')+'">'+icon('plus',16)+esc(addLabel)+'</button>':'')+'</div>';
   }
   function sampleBanner(){
-    return state.sample?'<div class="sample"><span>Ce sont des données d\'exemple. Efface-les pour partir de zéro.</span><button data-act="clear-sample">Tout effacer</button></div>':'';
+    return (cloud.locked?'<div class="sample"><span>Tes données sont chiffrées : saisis ton mot de passe pour les afficher.</span><button data-act="enc-unlock">Déverrouiller</button></div>':'')+(state.sample?'<div class="sample"><span>Ce sont des données d\'exemple. Efface-les pour partir de zéro.</span><button data-act="clear-sample">Tout effacer</button></div>':'');
   }
 
   function vToday(){
@@ -979,7 +979,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
           '<div><button class="btn" data-act="signout">Se déconnecter</button></div>';
     }
     var html=sampleBanner()+head('Réglages','Compte Google, synchronisation et agenda.')+
-      '<div class="panel"><h2>Compte</h2>'+acc+(cloud.error?'<div class="err">'+esc(cloud.error)+'</div>':'')+'</div>';
+      '<div class="panel"><h2>Compte</h2>'+acc+(cloud.error?'<div class="err">'+esc(cloud.error)+'</div>':'')+'</div>'+(cloud.user?encPanel():'');
     if(cloud.user){
       if(ok&&!cloud.calList&&!cloud.calLoading)loadCalendars();
       var pend=state.homework.filter(function(h){return needsEvent(h)||needsTask(h)}).length,body;
@@ -1113,37 +1113,133 @@ a.google-btn,a.icon-btn{text-decoration:none}
   }
   function signOut(){
     if(!cloud.auth)return;
-    cloud.auth.signOut();clearToken();resetCal();cloud.calList=null;cloud.error='';cloud.calError='';
+    forgetKey();cloud.auth.signOut();clearToken();resetCal();cloud.calList=null;cloud.error='';cloud.calError='';
   }
   function onTokenReady(){loadCalendars();calSync();maybeBackup();render()}
 
+  /* ---------- Chiffrement de bout en bout (facultatif) ---------- */
+  var ENC_KEY='marge-enckey',syncGen=0;
+  function b64(buf){var a=new Uint8Array(buf),t='';for(var i=0;i<a.length;i++)t+=String.fromCharCode(a[i]);return btoa(t)}
+  function unb64(x){var t=atob(x),a=new Uint8Array(t.length);for(var i=0;i<t.length;i++)a[i]=t.charCodeAt(i);return a}
+  function deriveKey(pass,salt){
+    return crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']).then(function(m){
+      return crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(salt),iterations:250000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},true,['encrypt','decrypt']);
+    });
+  }
+  function encJson(text){
+    var iv=crypto.getRandomValues(new Uint8Array(12)),c=cloud.crypto;
+    return crypto.subtle.encrypt({name:'AES-GCM',iv:iv},c.key,new TextEncoder().encode(text)).then(function(ct){return {v:1,salt:c.salt,iv:b64(iv),ct:b64(ct)}});
+  }
+  function decJson(enc,key){
+    return crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(enc.iv)},key,unb64(enc.ct)).then(function(b){return new TextDecoder().decode(b)});
+  }
+  function rememberKey(){
+    if(!cloud.crypto||!cloud.user)return Promise.resolve();
+    var c=cloud.crypto,uid=cloud.user.uid;
+    return crypto.subtle.exportKey('raw',c.key).then(function(raw){try{localStorage.setItem(ENC_KEY,JSON.stringify({uid:uid,salt:c.salt,k:b64(raw)}))}catch(e){}});
+  }
+  function forgetKey(){try{localStorage.removeItem(ENC_KEY)}catch(e){}}
+  function loadKey(uid){
+    var r=null;try{r=JSON.parse(localStorage.getItem(ENC_KEY)||'null')}catch(e){}
+    if(!r||r.uid!==uid||!window.crypto||!crypto.subtle)return Promise.resolve(null);
+    return crypto.subtle.importKey('raw',unb64(r.k),'AES-GCM',true,['encrypt','decrypt']).then(function(k){return {key:k,salt:r.salt}}).catch(function(){return null});
+  }
+  function readDoc(d){
+    if(d.enc){
+      cloud.lastEnc=d.enc;
+      if(cloud.crypto&&cloud.crypto.salt===d.enc.salt){
+        return decJson(d.enc,cloud.crypto.key).then(function(t){cloud.locked=false;return JSON.parse(t)}).catch(function(){cloud.crypto=null;forgetKey();cloud.locked=true;return null});
+      }
+      cloud.crypto=null;cloud.locked=true;return Promise.resolve(null);
+    }
+    cloud.locked=false;
+    var r=null;try{r=JSON.parse(d.json)}catch(e){}
+    return Promise.resolve(r);
+  }
+  function handleDoc(d,fromCache){
+    return readDoc(d).then(function(remote){
+      var ru=d.updatedAt||0,lu=state.updatedAt||0;
+      if(!cloud.locked){
+        if(cloud.crypto&&!d.enc&&remote&&ru>lu){cloud.crypto=null;forgetKey()}
+        if(remote&&ru>lu){
+          remote=normalize(remote);remote.updatedAt=ru;
+          state=remote;persistLocal();resetCal();
+        }else if(ru<lu&&!fromCache){pushNow()}
+      }
+      render();
+    });
+  }
   function startSync(u){
     stopSync();
-    cloud.ref=cloud.db.collection('users').doc(u.uid);
-    cloud.status='syncing';
-    cloud.unsub=cloud.ref.onSnapshot(function(snap){
-      if(snap.metadata.hasPendingWrites)return;
-      cloud.status=snap.metadata.fromCache?'offline':'synced';cloud.error='';
-      if(!snap.exists){pushNow();render();return}
-      var d=snap.data(),remote=null;
-      try{remote=JSON.parse(d.json)}catch(e){}
-      var ru=d.updatedAt||0,lu=state.updatedAt||0;
-      if(remote&&ru>lu){
-        remote=normalize(remote);remote.updatedAt=ru;
-        state=remote;persistLocal();resetCal();
-      }else if(ru<lu&&!snap.metadata.fromCache){pushNow()}
-      render();
-    },function(e){cloud.status='error';cloud.error=friendly(e);render()});
+    cloud.status='syncing';cloud.crypto=null;cloud.locked=false;
+    var gen=++syncGen;
+    loadKey(u.uid).then(function(k){
+      if(gen!==syncGen)return;
+      cloud.crypto=k;
+      cloud.ref=cloud.db.collection('users').doc(u.uid);
+      cloud.unsub=cloud.ref.onSnapshot(function(snap){
+        if(snap.metadata.hasPendingWrites)return;
+        cloud.status=snap.metadata.fromCache?'offline':'synced';cloud.error='';
+        if(!snap.exists){pushNow();render();return}
+        cloud.lastDoc=snap.data();
+        handleDoc(cloud.lastDoc,snap.metadata.fromCache);
+      },function(e){cloud.status='error';cloud.error=friendly(e);render()});
+    });
   }
-  function stopSync(){if(cloud.unsub){cloud.unsub();cloud.unsub=null}cloud.ref=null}
+  function stopSync(){syncGen++;if(cloud.unsub){cloud.unsub();cloud.unsub=null}cloud.ref=null;cloud.crypto=null;cloud.locked=false;cloud.lastDoc=null}
   function cloudPush(){if(!cloud.ref)return;clearTimeout(cloud.timer);cloud.timer=setTimeout(pushNow,700)}
   function pushNow(){
-    if(!cloud.ref)return;
+    if(!cloud.ref||cloud.locked)return;
     cloud.status='syncing';
-    cloud.ref.set({json:JSON.stringify(state),updatedAt:state.updatedAt||0}).then(function(){
+    var u=state.updatedAt||0,json=JSON.stringify(state);
+    (cloud.crypto?encJson(json).then(function(e){return {enc:e,updatedAt:u}}):Promise.resolve({json:json,updatedAt:u})).then(function(doc){return cloud.ref.set(doc)}).then(function(){
       cloud.status=navigator.onLine?'synced':'offline';cloud.error='';softRender();
     }).catch(function(e){cloud.status='error';cloud.error=friendly(e);softRender()});
   }
+  function encModal(mode){
+    var en=mode==='enable';
+    document.getElementById('modal-root').innerHTML='<div class="overlay"><form class="modal" id="enc-form" data-mode="'+mode+'" role="dialog" aria-modal="true" aria-label="Chiffrement">'+
+      '<div class="modal-head"><h2>'+(en?'Activer le chiffrement':'Déverrouiller mes données')+'</h2><button type="button" class="icon-btn" data-act="close" aria-label="Fermer">'+icon('x',20)+'</button></div>'+
+      '<div class="form"><p class="hint">'+(en?'Tes données seront chiffrées sur cet appareil avant d\'être envoyées : personne, même pas l\'administrateur de l\'appli, ne pourra les lire. <b>Ce mot de passe ne peut pas être récupéré.</b> Il te sera demandé sur chaque nouvel appareil.':'Saisis le mot de passe de chiffrement de tes données.')+'</p>'+
+      '<label>Mot de passe'+(en?' (8 caractères minimum)':'')+'<input class="field" type="password" id="enc-pass" autocomplete="'+(en?'new-password':'current-password')+'" required minlength="'+(en?8:1)+'"></label>'+
+      (en?'<label>Confirmer le mot de passe<input class="field" type="password" id="enc-pass2" autocomplete="new-password" required></label>':'')+
+      '<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" id="enc-rem" checked> Me faire confiance sur cet appareil (ne pas redemander)</label>'+
+      '<div class="err" id="enc-err" hidden></div></div>'+
+      '<div class="form-actions"><button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn btn-primary" id="enc-ok">'+(en?'Activer':'Déverrouiller')+'</button></div></form></div>';
+    var f=document.getElementById('enc-pass');if(f)f.focus();
+  }
+  function encError(m){var e=document.getElementById('enc-err');if(e){e.textContent=m;e.hidden=false}var b=document.getElementById('enc-ok');if(b)b.disabled=false}
+  function encSubmit(){
+    var mode=document.getElementById('enc-form').getAttribute('data-mode'),pw=document.getElementById('enc-pass').value,rem=document.getElementById('enc-rem').checked;
+    if(!window.crypto||!crypto.subtle){encError('Le chiffrement n\'est pas disponible dans ce navigateur (il faut une connexion sécurisée https).');return}
+    document.getElementById('enc-ok').disabled=true;
+    if(mode==='enable'){
+      if(pw.length<8){encError('8 caractères minimum.');return}
+      if(pw!==document.getElementById('enc-pass2').value){encError('Les deux mots de passe sont différents.');return}
+      var salt=b64(crypto.getRandomValues(new Uint8Array(16)));
+      deriveKey(pw,salt).then(function(key){
+        cloud.crypto={key:key,salt:salt};cloud.locked=false;
+        return (rem?rememberKey():Promise.resolve()).then(function(){state.updatedAt=Date.now();persistLocal();pushNow();closeModal();render()});
+      }).catch(function(){encError('Le chiffrement a échoué.')});
+    }else{
+      var enc=cloud.lastEnc;if(!enc){encError('Aucune donnée chiffrée à ouvrir.');return}
+      deriveKey(pw,enc.salt).then(function(key){
+        return decJson(enc,key).then(function(){
+          cloud.crypto={key:key,salt:enc.salt};cloud.locked=false;
+          return (rem?rememberKey():Promise.resolve()).then(function(){closeModal();return cloud.lastDoc?handleDoc(cloud.lastDoc,false):render()});
+        },function(){encError('Mot de passe incorrect.')});
+      }).catch(function(){encError('Mot de passe incorrect.')});
+    }
+  }
+  function encPanel(){
+    var on=!!cloud.crypto,locked=!!cloud.locked,h='<div class="panel"><h2>Chiffrement des données</h2>';
+    if(locked)return h+'<div class="setrow"><span class="tag t-orange">Verrouillé</span></div><p class="hint">Tes données sont chiffrées avec un mot de passe que cet appareil ne connaît pas encore.</p><div class="setrow"><button class="btn btn-primary" data-act="enc-unlock">Déverrouiller</button></div>'+
+      '<details class="more"><summary>Mot de passe oublié</summary><p class="hint">Les données chiffrées sont irrécupérables sans le mot de passe. Tu peux repartir de zéro : les données de cet appareil remplacent celles du cloud.</p><button class="btn" data-act="enc-reset">'+(armedEnc?'Confirmer : effacer les données chiffrées du cloud':'Remplacer les données du cloud')+'</button></details></div>';
+    if(on)return h+'<div class="setrow"><span class="tag t-green">Activé</span></div><p class="hint">Tes devoirs, matières et absences sont chiffrés avant l\'envoi : seul ton mot de passe les ouvre. Le mot de passe n\'est jamais envoyé et ne peut pas être récupéré. Seul ton e-mail de connexion reste visible. Les sauvegardes Drive restent dans ton propre Drive, sans chiffrement supplémentaire.</p>'+
+      '<div class="setrow"><button class="btn" data-act="enc-disable">Désactiver le chiffrement</button></div>';
+    return h+'<p class="hint">Par défaut, l\'administrateur de l\'appli peut techniquement lire les données synchronisées. Le chiffrement les rend illisibles pour tout le monde sauf toi.</p><div class="setrow"><button class="btn btn-primary" data-act="enc-enable">Activer le chiffrement</button></div></div>';
+  }
+  var armedEnc=false;
 
   function gapi(path,method,body){
     return fetch('https://www.googleapis.com/calendar/v3'+path,{method:method||'GET',headers:{'Authorization':'Bearer '+cloud.token,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined}).then(function(r){
@@ -1522,6 +1618,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   document.addEventListener('pointerup',endDrag);document.addEventListener('pointercancel',endDrag);
 
   document.addEventListener('submit',function(e){
+    if(e.target.id==='enc-form'){e.preventDefault();encSubmit();return}
     if(e.target.id==='ev-form'){
       e.preventDefault();
       var g=function(i){var el=document.getElementById(i);return el?el.value.trim():''};
@@ -1594,6 +1691,13 @@ a.google-btn,a.icon-btn{text-decoration:none}
     else if(act==='ev-restore'){Object.keys(state.evOver).forEach(function(k){if(state.evOver[k].hide)delete state.evOver[k]});save();render()}
     else if(act==='close')closeModal();
     else if(act==='mode')openModal(val);
+    else if(act==='enc-enable')encModal('enable');
+    else if(act==='enc-unlock')encModal('unlock');
+    else if(act==='enc-disable'){cloud.crypto=null;forgetKey();state.updatedAt=Date.now();persistLocal();pushNow();render()}
+    else if(act==='enc-reset'){
+      if(armedEnc){armedEnc=false;cloud.locked=false;cloud.crypto=null;forgetKey();state.sample=false;state.updatedAt=Date.now();persistLocal();pushNow();render()}
+      else{armedEnc=true;render()}
+    }
     else if(act==='edit-hw')openModal('hw',id);
     else if(act==='theme')toggleTheme();
     else if(act==='toggle-hw'){state.homework.forEach(function(h){if(h.id===id){h.done=!h.done;(h.steps||[]).forEach(function(x){x.done=h.done})}});afterChange();render()}
