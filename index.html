@@ -195,8 +195,8 @@ select.field,input.field,textarea.field{border:1px solid var(--line);background:
 .echchip u{width:7px;height:7px;border-radius:50%;background:var(--s);display:inline-block;flex:none}
 .echchip.strong{background:color-mix(in srgb,var(--s) 36%,var(--bg))}
 .plbar .echchip{white-space:normal}
-.tl .ghost{position:absolute;left:0;right:0;border:1px dotted color-mix(in srgb,var(--muted) 60%,transparent);border-radius:8px;font:10.5px var(--mono);color:var(--muted);padding:2px 6px;z-index:1;pointer-events:none;overflow:hidden;line-height:1.2}
-.ghostchip{font:11.5px var(--mono);color:var(--muted);border:1px dotted color-mix(in srgb,var(--muted) 60%,transparent);border-radius:8px;padding:4px 8px}
+.tl .ghost{position:absolute;left:0;right:0;border:1px dotted color-mix(in srgb,var(--muted) 60%,transparent);border-radius:8px;font:10.5px var(--mono);color:var(--muted);padding:2px 6px;z-index:2;cursor:pointer;overflow:hidden;line-height:1.2}
+.ghostchip{cursor:pointer;font:11.5px var(--mono);color:var(--muted);border:1px dotted color-mix(in srgb,var(--muted) 60%,transparent);border-radius:8px;padding:4px 8px}
 .echmore{font-size:12.5px;color:var(--muted);font-weight:600}
 .echwrap{display:flex;flex-direction:column;gap:6px}
 .lkdv{display:flex;flex-direction:column;gap:5px;margin-left:18px;padding-left:10px;border-left:2px solid var(--line)}
@@ -410,7 +410,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   function normalize(st){
     st.settings=st.settings||{};st.settings.schoolCal=st.settings.schoolCal||'';st.settings.map=st.settings.map||{};
     st.settings.ignored=st.settings.ignored||[];st.settings.imported=st.settings.imported||'';
-    st.pendingDeletes=st.pendingDeletes||[];st.updatedAt=st.updatedAt||0;st.evOver=st.evOver||{};st.customEvents=st.customEvents||[];
+    st.pendingDeletes=st.pendingDeletes||[];st.updatedAt=st.updatedAt||0;st.evOver=st.evOver||{};st.hideRules=st.hideRules||[];st.customEvents=st.customEvents||[];
     if(st.sample&&!st.demoMarked){
       [st.homework,st.absences,st.subjects].forEach(function(l){(l||[]).forEach(function(x){if(x.demo===undefined)x.demo=true})});
       st.demoMarked=true;
@@ -495,9 +495,9 @@ a.google-btn,a.icon-btn{text-decoration:none}
       '<div class="main-cell"><div class="title">'+esc(it.title)+(isStep?' <span class="mono">· '+esc(h.title)+'</span>':'')+'</div>'+
       '<div class="meta">'+subTag(h.sub)+(it.planTime?'<span class="mono">'+esc(it.planTime)+'</span>':'')+(it.dur?'<span>Durée visée : '+fmtDur(it.dur)+'</span>':'')+'</div></div></div>';
   }
-  function isEch(h){return h.kind==='cc'||h.kind==='exam'}
+  function isEch(h){return h.kind==='rendu'||h.kind==='cc'||h.kind==='exam'}
   function dm(d){return d?d.slice(8,10)+'/'+d.slice(5,7):''}
-  var KIND_SHORT={cc:'CC',exam:'Examen'};
+  var KIND_SHORT={rendu:'À rendre',cc:'CC',exam:'Examen'};
   function echOf(h){return h.ech?state.homework.filter(function(x){return x.id===h.ech&&isEch(x)})[0]||null:null}
   function echLabel(e){return KIND_SHORT[e.kind]+' · '+sub(e.sub).name+(e.date?' · '+dm(e.date):'')}
   function hwRow(h){
@@ -610,8 +610,8 @@ a.google-btn,a.icon-btn{text-decoration:none}
       });
       rowsHtml=keys.map(function(k){var g=groups[k];return '<div class="sec-label grp-h"><i style="background:'+g.col+'"></i>'+esc(g.label)+'<em>'+g.items.length+'</em></div>'+g.items.map(hwRow).join('')}).join('')||'<div class="empty">Aucun devoir ici. Utilise le bouton « Nouveau devoir ».</div>';
     }
-    var sortSel='<select class="field" id="hw-sort" aria-label="Trier par">'+optList([['date','Trier : date limite'],['sub','Trier : matière'],['prio','Trier : difficulté'],['kind','Trier : catégorie']],hwSort)+'</select>';
-    return sampleBanner()+head('Devoirs',hwSort==='date'?'Triés par date limite ; les devoirs sans échéance sont en dessous.':'Regroupés, puis classés par date limite.','Nouveau devoir')+echBanner()+
+    var sortSel='<select class="field" id="hw-sort" aria-label="Trier par">'+optList([['date','Trier : date limite'],['sub','Trier : matière'],['prio','Trier : difficulté']],hwSort)+'</select>';
+    return sampleBanner()+head('Devoirs',hwSort==='date'?'Triés par date limite ; les devoirs sans échéance sont en dessous.':'Regroupés, puis classés par date limite.','Nouveau devoir','add-hw')+echBanner()+
       '<div class="toolbar"><div class="seg" role="group" aria-label="Filtre">'+
       [['todo','À faire'],['done','Finis'],['all','Tous']].map(function(f){return '<button data-act="hw-filter" data-v="'+f[0]+'" aria-pressed="'+(hwFilter===f[0])+'">'+f[1]+'</button>'}).join('')+
       '</div>'+sortSel+'<select class="field" id="hw-sub" aria-label="Matière">'+opts+'</select></div>'+
@@ -635,7 +635,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       }).join('')+'</div>':'';
       return '<div class="echwrap">'+hwRow(h)+lh+'</div>';
     };
-    return sampleBanner()+head('Échéances','Contrôles continus et examens. Relie-leur des devoirs depuis la fiche d\'un devoir (« Échéance liée »).','Nouvelle échéance','add-ech')+
+    return sampleBanner()+head('Échéances','Rendus, contrôles continus et examens. Relie-leur des devoirs depuis la fiche d\'un devoir (« Échéance liée »).','Nouvelle échéance','add-ech')+
       '<div class="rows" style="gap:12px">'+(open.map(one).join('')||'<div class="empty">Aucune échéance à venir.</div>')+'</div>'+
       (done.length?'<details class="more"><summary>Terminées ('+done.length+')</summary><div class="rows" style="gap:12px;margin-top:8px">'+done.map(one).join('')+'</div></details>':'');
   }
@@ -649,7 +649,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       var ra=a.state==='done'?1:0,rb=b.state==='done'?1:0;
       return ra-rb||(a.date<b.date?1:-1);
     });
-    return sampleBanner()+head('Absences','Ce qu\'il reste à récupérer, et auprès de qui.','Nouvelle absence')+
+    return sampleBanner()+head('Absences','Ce qu\'il reste à récupérer, et auprès de qui.','Nouvelle absence','add-abs')+
       '<div class="section"><h2>Compteur par matière</h2><div class="chips">'+chips+'</div></div>'+
       '<div class="rows">'+(list.map(absRow).join('')||'<div class="empty">Aucune absence enregistrée.</div>')+'</div>';
   }
@@ -790,13 +790,20 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var want=prev||(cur&&cur.link?cur.link:'');
     if(want&&opts.some(function(o){return o.v===want}))sel.value=want;
   }
+  function ruleFor(e,di){
+    var ov=(state.evOver||{})[e.id];if(ov&&(ov.keep||ov.hide))return null;
+    var wd=(parse(di).getDay()+6)%7,L=state.hideRules||[];
+    for(var i=0;i<L.length;i++){var r=L[i];
+      if(r.wd===wd&&r.a===e.a&&r.b===e.b&&(r.sid||'')===(e.sid||'')&&(r.sid||r.title===e.title)&&di>=r.from&&(!r.until||di<=r.until))return r}
+    return null;
+  }
   function dayEvents(d){
     var di=iso(d),base=dayEventsRaw(d),ov=state.evOver||{};
     var cust=(state.customEvents||[]).filter(function(c){return c.date===di});
     if(base===null&&!cust.length)return null;
     var out=[];
     var hid=[];
-    (base||[]).forEach(function(e){var x=applyOver(e);if(x)out.push(x);else hid.push({a:e.a,b:e.b,title:e.title})});
+    (base||[]).forEach(function(e){var rl=ruleFor(e,di),x=rl?null:applyOver(e);if(x)out.push(x);else hid.push({a:e.a,b:e.b,title:e.title,id:e.id,date:di,rule:rl?rl.id:''})});
     cust.forEach(function(c){
       var u=c.sub?state.subjects.filter(function(y){return y.id===c.sub})[0]:null;
       out.push({id:c.id,custom:true,title:c.title||(u?u.name:'Cours'),kind:kindFor(c.kind,c.room),a:c.a,b:c.b,room:c.room||'',color:u?u.color:'gray',sid:u?u.id:'',noCode:!u});
@@ -818,7 +825,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     }
     if(!cloud.user&&state.sample){
       var wd=(d.getDay()+6)%7;
-      return wd>4?[]:SCHEDULE[wd].map(function(e){var u=sub(e.s);return {title:u.name,a:e.a,b:e.b,room:e.r,kind:e.k,color:u.color,sid:u.id}});
+      return wd>4?[]:SCHEDULE[wd].map(function(e){var u=sub(e.s);return {id:'demo'+iso(d)+e.a,title:u.name,a:e.a,b:e.b,room:e.r,kind:e.k,color:u.color,sid:u.id}});
     }
     return [];
   }
@@ -893,7 +900,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         prevEnd=prevEnd===null?c.f:Math.max(prevEnd,c.f);
       });
       if(prevEnd!==null)fr(prevEnd,dwe);
-      var ghosts=(evl.hidden||[]).map(function(g){var g0=toMin(g.a),g1=toMin(g.b);return '<div class="ghost" style="top:'+yOf(g0)+'px;height:'+Math.max(18,yOf(g1)-yOf(g0))+'px" title="Cours masqué : '+esc(g.title)+'">masqué · '+esc(g.title)+'</div>'}).join('');
+      var ghosts=(evl.hidden||[]).map(function(g){var g0=toMin(g.a),g1=toMin(g.b);return '<div class="ghost" data-act="ghost" data-id="'+esc(g.id||'')+'" data-date="'+g.date+'" data-rule="'+esc(g.rule||'')+'" style="top:'+yOf(g0)+'px;height:'+Math.max(18,yOf(g1)-yOf(g0))+'px" title="Cours masqué : '+esc(g.title)+' — toucher pour rétablir">masqué · '+esc(g.title)+' ↺</div>'}).join('');
       blocks+=free+ghosts;
       evs.forEach(function(c){
         var e=c.e,h=yOf(c.f)-yOf(c.s)-2,w=100/c.lanes,past=parse(di,e.b)<now,ekey=di+'|'+e.a+'|'+(e.id||e.title),eopen=!!openEv[ekey];
@@ -918,14 +925,14 @@ a.google-btn,a.icon-btn{text-decoration:none}
         mlist+='<div class="ev sc'+(past?' past':'')+(e.perso?' perso':'')+'" style="--s:'+hexOf(e.color)+'">'+evInner(e,di,false)+'</div>';
       });
       if(pe!==null&&mwe-pe>=45)mlist+='<div class="free-chip">Libre · '+mm2(pe)+' – '+mm2(mwe)+' · '+fmtDur(mwe-pe)+'</div>';
-      (evl.hidden||[]).forEach(function(g){mlist+='<div class="ghostchip">Cours masqué · '+esc(g.a)+' – '+esc(g.b)+' · '+esc(g.title)+'</div>'});
+      (evl.hidden||[]).forEach(function(g){mlist+='<div class="ghostchip" role="button" tabindex="0" data-act="ghost" data-id="'+esc(g.id||'')+'" data-date="'+g.date+'" data-rule="'+esc(g.rule||'')+'">Cours masqué · '+esc(g.a)+' – '+esc(g.b)+' · '+esc(g.title)+' ↺</div>'});
       mob+='<div class="'+cls+'">'+headTxt+(load?'<div class="load">Prévu : '+fmtDur(load)+'</div>':'')+mlist+untimed.map(function(it){return planHtml(it,false)}).join('')+'</div>';
     }
     var colsCss='--cols:'+colw.join(' ');
     var bandHtml=band.length?'<div class="echbar plbar"><i>Échéances</i>'+band.map(function(x){var h=x.h,tm=(h.time&&h.time!=='23:59')?' '+h.time:'';return '<span class="echchip'+((h.kind==='cc'||h.kind==='exam')?' strong':'')+'" style="--s:'+hexOf(sub(h.sub).color)+'" title="'+esc(h.title)+'"><u></u>'+DAYS[x.k].slice(0,3)+'.'+tm+' · '+esc(KIND_FLAG[h.kind]||'Devoir')+' · '+esc(h.title)+'</span>'}).join('')+'</div>':'';
     var subt=loading?'Chargement de ton calendrier…':(calNotice()||'Lu depuis ton calendrier de la fac dans Google Agenda.');
-    var nHidden=Object.keys(state.evOver||{}).filter(function(k){return state.evOver[k].hide}).length;
-    var restore=nHidden?'<p class="hint" style="margin:-6px 0 12px">'+nHidden+' cours masqué'+(nHidden>1?'s':'')+' · <button class="linkbtn" data-act="ev-restore">Tout rétablir</button></p>':'';
+    var nHidden=Object.keys(state.evOver||{}).filter(function(k){return state.evOver[k].hide}).length+(state.hideRules||[]).length;
+    var restore=nHidden?'<p class="hint" style="margin:-6px 0 12px">'+nHidden+' cours masqué'+(nHidden>1?'s':'')+' (touche un cours « masqué » pour le rétablir) · <button class="linkbtn" data-act="ev-restore">Tout rétablir</button></p>':'';
     return sampleBanner()+head('Planning',subt,'Ajouter un événement','add-ev')+restore+
       '<div class="weeknav"><button class="icon-btn" data-act="week" data-v="-1" aria-label="Semaine précédente">'+icon('left')+'</button>'+
       '<b style="min-width:150px;text-align:center">'+esc(title)+' <small class="wk" title="Semaine '+isoWeek(ws)+' de l\'année">S'+isoWeek(ws)+'</small></b>'+
@@ -1519,25 +1526,25 @@ a.google-btn,a.icon-btn{text-decoration:none}
       '<button type="button" class="icon-btn" data-act="del-step" aria-label="Retirer la sous-tâche">'+icon('x',16)+'</button>'+
       '<div class="three"><select class="field s-dur" aria-label="Durée visée">'+optList(DURS,x.dur||0)+'</select><input class="field s-pdate" type="date" aria-label="Je m\'y mets le" value="'+esc(x.planDate||'')+'"><input class="field s-ptime" type="time" aria-label="À" value="'+esc(x.planTime||'')+'"></div></div>';
   }
-  function echOptions(sel){
-    var l=state.homework.filter(function(h){return isEch(h)&&(!h.done||h.id===sel)}).sort(function(a,b){return ((a.date||'9')+(a.time||''))<((b.date||'9')+(b.time||''))?-1:1});
+  function echOptions(sel,subId){
+    var l=state.homework.filter(function(h){return isEch(h)&&(!subId||h.sub===subId)&&(!h.done||h.id===sel)}).sort(function(a,b){return ((a.date||'9')+(a.time||''))<((b.date||'9')+(b.time||''))?-1:1});
     return '<option value="">Aucune</option>'+l.map(function(h){return '<option value="'+h.id+'"'+(h.id===sel?' selected':'')+'>'+esc(echLabel(h)+' — '+h.title)+'</option>'}).join('');
   }
   function openModal(mode,id){
     modalMode=mode||(view==='absences'?'abs':'hw');
-    editId=(modalMode==='hw'&&id)?id:'';
+    editId=((modalMode==='hw'||modalMode==='ech')&&id)?id:'';
     var h=editId?state.homework.filter(function(x){return x.id===editId})[0]:null;
     if(editId&&!h)editId='';
     var v=h||{},tomorrow=iso(addDays(new Date(),1)),today=iso(new Date());
-    var pk=(view==='echeances'&&!editId)?'cc':'devoir',isHw=modalMode==='hw',durs=DURS.slice(),when=editId?(v.when||(v.date?(v.link?'course':'date'):'none')):'date';
+    var isEchM=modalMode==='ech',pk=isEchM?'cc':'devoir',isHw=modalMode==='hw'||isEchM,durs=DURS.slice(),when=editId?(v.when||(v.date?(v.link?'course':'date'):'none')):'date';
     if(v.dur&&!durs.some(function(d){return d[0]===v.dur}))durs.push([v.dur,fmtDur(v.dur)]);
     var moreOpen=!!(editId&&(v.dur||v.planDate||(v.steps&&v.steps.length)||(v.remind&&v.remind!=='eve')||v.asEvent)),
         moreSum=(v.remind==='none'?'aucun rappel':(v.asEvent?'événement':'tâche')+' Google, rappel '+(REMIND[v.remind||'eve']||'').toLowerCase());
     var body=isHw?
       '<label>Titre<input class="field" id="f-title" required placeholder="Ex. Fiche de lecture" autocomplete="off" value="'+esc(v.title||'')+'"></label>'+
-      '<div class="two"><label>Type<select class="field" id="f-kind">'+optList(KINDS,v.kind||(window.__pk||pk))+'</select></label>'+
+      (isEchM?'<div class="two"><label>Type<select class="field" id="f-kind">'+optList(KINDS.filter(function(k){return k[0]!=='devoir'}),v.kind||'cc')+'</select></label>':'<input type="hidden" id="f-kind" value="devoir"><div class="two">')+
       '<label>Matière<select class="field" id="f-sub">'+subjectOptions(v.sub)+'</select></label></div>'+
-      '<div id="w-ech"'+(isEch({kind:v.kind||(window.__pk||pk)})?' hidden':'')+'><label>Échéance liée<select class="field" id="f-ech">'+echOptions(v.ech)+'</select></label></div>'+
+      (isEchM?'':'<div id="w-ech"><label>Échéance liée<select class="field" id="f-ech">'+echOptions(v.ech,v.sub||(state.subjects[0]||{}).id)+'</select></label></div>')+
       '<div class="f2"><span class="hint">Pour quand ?</span><div class="seg wide" role="group" aria-label="Pour quand ?">'+[['date','Une date'],['course','Un cours'],['none','Sans échéance']].map(function(b){return '<button type="button" data-act="when" data-v="'+b[0]+'" aria-pressed="'+(when===b[0])+'">'+b[1]+'</button>'}).join('')+'</div></div>'+
       '<input type="hidden" id="f-when" value="'+when+'">'+
       '<div id="w-date"'+(when==='date'?'':' hidden')+'><div class="two"><label>Date limite<input class="field" type="date" id="f-date"'+(when==='date'?' required':'')+' value="'+esc(v.date||tomorrow)+'"></label>'+
@@ -1560,12 +1567,11 @@ a.google-btn,a.icon-btn{text-decoration:none}
       '<label>Date du cours manqué<input class="field" type="date" id="f-date" required value="'+today+'"></label></div>'+
       '<label>À récupérer<input class="field" id="f-what" required placeholder="Ex. Notes du cours et diapos" autocomplete="off"></label>'+
       '<label>Qui a les notes ?<input class="field" id="f-who" placeholder="Nom d\'un camarade" autocomplete="off"></label>';
-    var head=editId?'Modifier le devoir':'Ajout rapide';
+    var head=isEchM?(editId?'Modifier l\'échéance':'Nouvelle échéance'):(modalMode==='abs'?'Nouvelle absence':(editId?'Modifier le devoir':'Nouveau devoir'));
     document.getElementById('modal-root').innerHTML=
       '<div class="overlay"><form class="modal" id="add-form" role="dialog" aria-modal="true" aria-label="'+head+'">'+
       '<div class="modal-head"><h2>'+head+'</h2><button type="button" class="icon-btn" data-act="close" aria-label="Fermer">'+icon('x',20)+'</button></div>'+
-      (editId?'':'<div class="seg" role="group" aria-label="Type"><button type="button" data-act="mode" data-v="hw" aria-pressed="'+isHw+'">Devoir</button><button type="button" data-act="mode" data-v="abs" aria-pressed="'+!isHw+'">Absence</button></div>')+
-      '<div class="form">'+body+'</div>'+
+            '<div class="form">'+body+'</div>'+
       '<div class="form-actions"><button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn btn-primary">'+(editId?'Enregistrer':'Ajouter')+'</button></div></form></div>';
     var first=document.getElementById(isHw?'f-title':'f-what');if(first)first.focus();
     if(isHw){fetchSlots();refreshSlotSelect()}
@@ -1577,7 +1583,9 @@ a.google-btn,a.icon-btn{text-decoration:none}
     if(id&&!cust&&!cur)return;
     var custom=!!cust||isNew,v=cust||cur||{a:'08:00',b:'10:00',kind:'CM',room:''};
     var sid=cust?cust.sub:(cur?cur.sid:'');
-    evState={id:id||'',date:di,custom:custom,isNew:isNew,title:cur?cur.title:''};
+    evState={id:id||'',date:di,custom:custom,isNew:isNew,title:cur?cur.title:'',a:v.a,b:v.b};
+    var raw=(!custom&&id)?(dayEventsRaw(parse(di))||[]).filter(function(x){return x.id===id})[0]:null;
+    if(raw){evState.ra=raw.a;evState.rb=raw.b;evState.rsid=raw.sid||'';evState.rtitle=raw.title}
     var head=isNew?'Ajouter un cours':'Modifier le cours';
     var subs='<option value="">Aucune (événement divers)</option>'+subjectOptions(sid);
     var body='<label>Titre<input class="field" id="e-title" placeholder="Laisse vide pour reprendre le nom de la matière" autocomplete="off" value="'+esc(cust?(cust.title||''):(cur?cur.title:''))+'"></label>'+
@@ -1592,6 +1600,39 @@ a.google-btn,a.icon-btn{text-decoration:none}
     document.getElementById('modal-root').innerHTML='<div class="overlay"><form class="modal" id="ev-form" role="dialog" aria-modal="true" aria-label="'+head+'">'+
       '<div class="modal-head"><h2>'+head+'</h2><button type="button" class="icon-btn" data-act="close" aria-label="Fermer">'+icon('x',20)+'</button></div>'+
       '<div class="form">'+body+'</div><div class="form-actions">'+extra+'<button type="button" class="btn" data-act="close">Annuler</button><button type="submit" class="btn btn-primary">'+(isNew?'Ajouter':'Enregistrer')+'</button></div></form></div>';
+  }
+  function modalShell(label,body,acts){
+    document.getElementById('modal-root').innerHTML='<div class="overlay"><form class="modal" id="mini-form" onsubmit="return false" role="dialog" aria-modal="true" aria-label="'+label+'"><div class="modal-head"><h2>'+label+'</h2><button type="button" class="icon-btn" data-act="close" aria-label="Fermer">'+icon('x',20)+'</button></div><div class="form">'+body+'</div>'+(acts?'<div class="form-actions">'+acts+'</div>':'')+'</form></div>';
+  }
+  function addChooser(){
+    var o=[['hw','Devoir','Travail à faire, avec ou sans date'],['ech','Échéance','À rendre, contrôle continu ou examen'],['ev','Cours / événement','Ajouter ou répéter un créneau au planning'],['abs','Absence','Un cours manqué à récupérer']];
+    modalShell('Ajouter…',o.map(function(x){return '<button type="button" class="btn pick" data-act="pick-add" data-v="'+x[0]+'" style="justify-content:flex-start;text-align:left;width:100%;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px"><b>'+x[1]+'</b><span class="hint" style="margin:0">'+x[2]+'</span></button>'}).join(''));
+  }
+  function hideAsk(){
+    var e=evState;
+    modalShell('Masquer ce cours',
+      '<p class="hint" style="margin:0">'+esc(e.title)+' · '+esc(e.a)+' – '+esc(e.b)+'</p>'+
+      '<div role="group" style="display:flex;flex-direction:column;gap:12px"><label style="display:flex;gap:10px;align-items:center;flex-direction:row"><input type="radio" name="hmode" value="one" checked style="width:auto;margin:0">Cette fois seulement</label>'+
+      '<label style="display:flex;gap:10px;align-items:center;flex-direction:row"><input type="radio" name="hmode" value="all" style="width:auto;margin:0">Toutes les semaines à venir</label>'+
+      '<label style="display:flex;gap:10px;align-items:center;flex-direction:row;flex-wrap:wrap"><input type="radio" name="hmode" value="until" style="width:auto;margin:0">Chaque semaine jusqu\'au <input class="field" type="date" id="h-until" value="'+iso(addDays(parse(e.date),28))+'" style="width:auto"></label></div>',
+      '<button type="button" class="btn" data-act="close">Annuler</button><button type="button" class="btn btn-primary" data-act="hide-go">Masquer</button>');
+  }
+  function hideGo(){
+    var m=(document.querySelector('input[name=hmode]:checked')||{}).value||'one',e=evState;
+    if(m==='one')state.evOver[e.id]={hide:true};
+    else{
+      var until=m==='until'?(document.getElementById('h-until').value||''):'';
+      if(m==='until'&&until<e.date){alert('La date de fin doit suivre ce cours.');return}
+      state.hideRules.push({id:uid(),wd:(parse(e.date).getDay()+6)%7,a:e.ra,b:e.rb,sid:e.rsid,title:e.rtitle,from:e.date,until:until});
+    }
+    save();closeModal();render();
+  }
+  function ghostModal(el){
+    var id=el.getAttribute('data-id'),rule=el.getAttribute('data-rule'),date=el.getAttribute('data-date');
+    var acts='<button type="button" class="btn" data-act="close">Annuler</button>'+
+      (rule?'<button type="button" class="btn" data-act="ghost-rule" data-rule="'+esc(rule)+'">Toute la série</button>':'')+
+      '<button type="button" class="btn btn-primary" data-act="ghost-one" data-id="'+esc(id)+'" data-rule="'+esc(rule)+'">Rétablir ce cours</button>';
+    modalShell('Rétablir le cours ?','<p class="hint" style="margin:0">'+esc(el.textContent.replace(/↺/,'').trim())+(rule?'<br>Masqué par une règle hebdomadaire.':'')+'</p>',acts);
   }
   function closeModal(){document.getElementById('modal-root').innerHTML=''}
   /* fenêtres déplaçables par leur en-tête */
@@ -1641,7 +1682,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     if(e.target.id!=='add-form')return;
     e.preventDefault();
     var v=function(id){var el=document.getElementById(id);return el?el.value.trim():''};
-    if(modalMode==='hw'){
+    if(modalMode==='hw'||modalMode==='ech'){
       var W={when:v('f-when')||'date',date:'',time:'',link:'',ctype:'CM',remind:v('f-remind')};
       if(W.when==='date'){W.date=v('f-date');W.time=v('f-time')||'23:59'}
       else if(W.when==='course'){
@@ -1650,7 +1691,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         W.date=op.getAttribute('data-date');W.time=op.getAttribute('data-a')||'23:59';W.link=op.getAttribute('data-code')||'';W.ctype=op.getAttribute('data-kind')==='TD'?'TD':'CM';
       }else W.remind='none';
       var data={title:v('f-title'),sub:v('f-sub'),kind:v('f-kind')||'devoir',date:W.date,time:W.time,prio:v('f-prio'),remind:W.remind,when:W.when,dur:+v('f-dur')||0,planDate:v('f-pdate'),planTime:v('f-pdate')?v('f-ptime'):'',ctype:W.ctype,asEvent:v('f-gmode')==='event'&&!!W.date,link:W.link};
-      data.ech=(data.kind==='cc'||data.kind==='exam')?'':v('f-ech');
+      data.ech=isEch(data)?'':v('f-ech');
       var old=editId?state.homework.filter(function(x){return x.id===editId})[0]:null,oldSteps=(old&&old.steps)||[];
       data.steps=[].slice.call(document.querySelectorAll('#f-steps .step-row')).map(function(r){
         var t=r.querySelector('.s-title').value.trim();if(!t)return null;
@@ -1677,18 +1718,25 @@ a.google-btn,a.icon-btn{text-decoration:none}
   document.addEventListener('click',function(e){
     var el=e.target.closest('[data-act]');if(!el)return;
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id'),val=el.getAttribute('data-v');
-    if(act==='add')openModal();
+    if(act==='add')addChooser();
+    else if(act==='add-hw')openModal('hw');
+    else if(act==='add-abs')openModal('abs');
+    else if(act==='hide-go')hideGo();
+    else if(act==='ghost')ghostModal(el);
+    else if(act==='ghost-one'){var gi=el.getAttribute('data-id'),gr=el.getAttribute('data-rule');if(gr)state.evOver[gi]={keep:true};else delete state.evOver[gi];save();closeModal();render()}
+    else if(act==='ghost-rule'){var rr=el.getAttribute('data-rule');state.hideRules=(state.hideRules||[]).filter(function(r){return r.id!==rr});save();closeModal();render()}
+    else if(act==='pick-add'){closeModal();if(val==='hw')openModal('hw');else if(val==='ech')openModal('ech');else if(val==='abs')openModal('abs');else openEvModal('',iso(new Date()))}
     else if(act==='exp-ev'){var kk=el.getAttribute('data-key');openEv[kk]=!openEv[kk];render()}
-    else if(act==='add-ech'){window.__pk='cc';openModal('hw');window.__pk=''}
+    else if(act==='add-ech')openModal('ech')
     else if(act==='add-ev')openEvModal('',iso(new Date()));
     else if(act==='edit-ev')openEvModal(el.getAttribute('data-evid'),el.getAttribute('data-date'));
     else if(act==='ev-del'){
       if(evState.custom)state.customEvents=state.customEvents.filter(function(c){return c.id!==evState.id});
-      else state.evOver[evState.id]={hide:true};
+      else{hideAsk();return}
       save();closeModal();render();
     }
     else if(act==='ev-reset'){delete state.evOver[evState.id];save();closeModal();render()}
-    else if(act==='ev-restore'){Object.keys(state.evOver).forEach(function(k){if(state.evOver[k].hide)delete state.evOver[k]});save();render()}
+    else if(act==='ev-restore'){Object.keys(state.evOver).forEach(function(k){if(state.evOver[k].hide||state.evOver[k].keep)delete state.evOver[k]});state.hideRules=[];save();render()}
     else if(act==='close')closeModal();
     else if(act==='mode')openModal(val);
     else if(act==='enc-enable')encModal('enable');
@@ -1698,7 +1746,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       if(armedEnc){armedEnc=false;cloud.locked=false;cloud.crypto=null;forgetKey();state.sample=false;state.updatedAt=Date.now();persistLocal();pushNow();render()}
       else{armedEnc=true;render()}
     }
-    else if(act==='edit-hw')openModal('hw',id);
+    else if(act==='edit-hw'){var eh=state.homework.filter(function(x){return x.id===id})[0];openModal(eh&&isEch(eh)?'ech':'hw',id)}
     else if(act==='theme')toggleTheme();
     else if(act==='toggle-hw'){state.homework.forEach(function(h){if(h.id===id){h.done=!h.done;(h.steps||[]).forEach(function(x){x.done=h.done})}});afterChange();render()}
     else if(act==='toggle-step'){state.homework.forEach(function(h){if(h.id===id){(h.steps||[]).forEach(function(x){if(x.id===val)x.done=!x.done});h.done=!!(h.steps&&h.steps.length&&h.steps.every(function(x){return x.done}))}});afterChange();render()}
@@ -1761,7 +1809,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var t=e.target;
     if(t.id==='hw-sub'){hwSub=t.value;render();return}
     if(t.id==='hw-sort'){hwSort=t.value;render();return}
-    if(t.id==='f-sub'){refreshSlotSelect();return}
+    if(t.id==='f-sub'){var fe=document.getElementById('f-ech');if(fe)fe.innerHTML=echOptions('',t.value);refreshSlotSelect();return}
     if(t.id==='f-kind'){var we=document.getElementById('w-ech');if(we)we.hidden=(t.value==='cc'||t.value==='exam');return}
     if(t.id==='set-gcid'){state.settings.gClientId=t.value.trim();gis=null;save();render();return}
     if(t.getAttribute&&t.getAttribute('data-percal')!==null){
@@ -1780,7 +1828,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   document.addEventListener('keydown',function(e){
     if(e.key==='Escape')closeModal();
     var tag=(e.target.tagName||'').toLowerCase();
-    if((e.key==='n'||e.key==='N')&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&tag!=='input'&&tag!=='textarea'&&tag!=='select'&&!document.getElementById('add-form')){e.preventDefault();openModal()}
+    if((e.key==='n'||e.key==='N')&&!e.metaKey&&!e.ctrlKey&&!e.altKey&&tag!=='input'&&tag!=='textarea'&&tag!=='select'&&!document.getElementById('add-form')){e.preventDefault();addChooser()}
   });
   window.addEventListener('hashchange',route);
   if(window.matchMedia)try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render)}catch(e){}
