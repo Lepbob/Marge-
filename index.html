@@ -236,6 +236,7 @@ html,body{overflow-x:hidden;max-width:100vw;touch-action:pan-y;overscroll-behavi
 input,select,textarea,button{max-width:100%}
 .modal,.overlay{touch-action:pan-y}
 .form label>.field{width:100%;box-sizing:border-box}
+#tabbar a{position:relative}.pastille{position:absolute;top:4px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:#e0852a;border:2px solid var(--bg)}
 @media (max-width:700px){.overlay{padding:8px}.modal{transform:none!important;width:100%;box-sizing:border-box}.modal-head{cursor:default;touch-action:auto}.step-row .three{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.step-row .three .s-dur{grid-column:1/-1}}
 .load{font-family:var(--mono);font-size:12px;color:var(--muted);padding:0 2px}
 .modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -543,7 +544,6 @@ a.google-btn,a.icon-btn{text-decoration:none}
     {k:'aujourdhui',l:'Aujourd\'hui',i:'home'},
     {k:'devoirs',l:'Devoirs',i:'check'},
     {k:'echeances',l:'Échéances',i:'flag'},
-    {k:'absences',l:'Absences',i:'absent'},
     {k:'planning',l:'Planning',i:'cal'},
     {k:'matieres',l:'Matières',i:'book'}
   ];
@@ -954,6 +954,20 @@ a.google-btn,a.icon-btn{text-decoration:none}
   var armedSub='',openSubs={};
   document.addEventListener('toggle',function(e){var d=e.target;if(d&&d.getAttribute&&d.getAttribute('data-sub-det'))openSubs[d.getAttribute('data-sub-det')]=d.open},true);
   var COLOR_NAMES={blue:'Bleu',purple:'Violet',green:'Vert',orange:'Orange',red:'Rouge',gray:'Gris'};
+  function lastHwAt(s){var t=(s.remind&&s.remind.since)||0;state.homework.forEach(function(h){if(h.sub===s.id&&(h.created||0)>t)t=h.created});return t}
+  function remDue(s){var r=s.remind;if(!r||!r.on)return 0;var d=Math.floor((Date.now()-lastHwAt(s))/864e5);return d>=r.days?Math.max(d,r.days):0}
+  function remModal(id){
+    var s=state.subjects.filter(function(x){return x.id===id})[0];if(!s)return;
+    var r=s.remind||{on:false,days:7},pre=[3,7,14],cu=pre.indexOf(r.days)<0;
+    var radio=function(v,l){return '<label class="opt"><input type="radio" name="rmd" value="'+v+'"'+((v==='c'?cu:(!cu&&r.days===v))?' checked':'')+' style="width:auto;margin:0"> '+l+'</label>'};
+    modalShell('Rappel · '+esc(s.name),
+      '<label class="opt"><input type="checkbox" id="rm-on"'+(r.on?' checked':'')+' style="width:auto;margin:0"> Me prévenir si aucun devoir n\'est ajouté</label>'+
+      '<p class="hint" style="margin:0">Depuis combien de temps sans nouveau devoir pour cette matière ?</p>'+
+      radio(3,'3 jours')+radio(7,'7 jours')+radio(14,'14 jours')+
+      '<label class="opt">'+'<input type="radio" name="rmd" value="c"'+(cu?' checked':'')+' style="width:auto;margin:0"> Autre <input class="field" type="number" min="1" max="365" id="rm-n" value="'+(cu?r.days:10)+'" style="width:90px"> jours</label>'+
+      '<p class="hint" style="margin:0">Un repère « rappel » apparaît sur la tuile et sur Matières ; il disparaît dès que tu ajoutes un devoir.</p>',
+      '<button type="button" class="btn" data-act="close">Annuler</button><button type="button" class="btn btn-primary" data-act="rem-save" data-id="'+s.id+'">Enregistrer</button>');
+  }
   function hostOf(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return 'Lien'}}
   function vSubjects(){
     var cards=state.subjects.map(function(s){
@@ -965,7 +979,10 @@ a.google-btn,a.icon-btn{text-decoration:none}
         '<label class="swatch add" title="Couleur libre">+<input type="color" id="p-'+s.id+'-color" data-sub="'+s.id+'" data-field="color" value="'+cur+'" aria-label="Couleur libre"></label></div></details>';
       var fld=function(k,label,ph){return '<label for="p-'+s.id+'-'+k+'">'+label+'</label><input id="p-'+s.id+'-'+k+'" data-sub="'+s.id+'" data-field="'+k+'" value="'+esc(s[k]||'')+'" placeholder="'+ph+'">'};
       return '<div class="card subj" style="--s:'+hexOf(s.color)+'"><h3><span class="dot" style="background:'+hexOf(s.color)+'"></span>'+esc(s.name||'Sans nom')+'</h3>'+
-        '<div class="stats"><span class="tag t-'+(hw?'orange':'gray')+'">'+hw+' devoir'+(hw>1?'s':'')+'</span><span class="tag t-'+(ab?'red':'gray')+'">'+ab+' à rattraper</span></div>'+
+        '<div class="stats"><span class="tag t-'+(hw?'orange':'gray')+'">'+hw+' devoir'+(hw>1?'s':'')+'</span><span class="tag t-'+(ab?'red':'gray')+'">'+ab+' à rattraper</span>'+
+          (s.remind&&s.remind.on?'<span class="tag t-'+(remDue(s)?'orange':'gray')+'">'+(remDue(s)?'rappel · aucun devoir depuis '+remDue(s)+' j':'rappel · '+s.remind.days+' j')+'</span>':'')+'</div>'+
+        '<div class="actions"><button class="btn btn-primary" data-act="sub-add-hw" data-id="'+s.id+'">'+icon('plus',15)+'Devoir</button><button class="btn" data-act="sub-add-abs" data-id="'+s.id+'">'+icon('plus',15)+'Absence</button><button class="btn" data-act="sub-rem" data-id="'+s.id+'">Rappel</button></div>'+
+        (state.absences.some(function(a){return a.sub===s.id})?'<details class="colordd card-det" data-sub-det="ab-'+s.id+'"'+(openSubs['ab-'+s.id]?' open':'')+'><summary>Absences ('+state.absences.filter(function(a){return a.sub===s.id}).length+')</summary><div class="rows">'+state.absences.filter(function(a){return a.sub===s.id}).sort(function(a,b){return (a.state==='done'?1:0)-(b.state==='done'?1:0)||(a.date<b.date?1:-1)}).map(absRow).join('')+'</div></details>':'')+
         '<div class="actions">'+[s.drive,s.link2].map(function(u,i){return /^https:\/\//.test(u||'')?'<a class="btn" href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(hostOf(u))+'</a>':''}).join('')+'</div>'+
         '<details class="colordd card-det" data-sub-det="'+s.id+'"'+(openSubs[s.id]?' open':'')+'><summary>Modifier</summary>'+
         '<div class="props">'+
@@ -977,7 +994,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         '<div class="actions"><button class="btn" data-act="del-sub" data-id="'+s.id+'">'+(armedSub===s.id?'Confirmer la suppression':'Supprimer la matière')+'</button></div>'+
         '</details></div>';
     }).join('');
-    return sampleBanner()+head('Matières','Le nom de chaque matière et deux liens (dossier Drive, cours en ligne…).','Nouvelle matière','add-sub')+'<div class="cards">'+(cards||'<div class="empty">Aucune matière. Utilise « Nouvelle matière ».</div>')+'</div>';
+    return sampleBanner()+head('Matières','Devoirs, absences à rattraper et rappel par matière.','Nouvelle matière','add-sub')+'<div class="cards">'+(cards||'<div class="empty">Aucune matière. Utilise « Nouvelle matière ».</div>')+'</div>';
   }
 
   function vSettings(){
@@ -1470,7 +1487,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
 
   /* ---------- Rendu général ---------- */
   function renderSide(){
-    var counts={devoirs:openHw().filter(function(h){return !isEch(h)}).length,echeances:openHw().filter(isEch).length,absences:openAbs().length};
+    var counts={devoirs:openHw().filter(function(h){return !isEch(h)}).length,echeances:openHw().filter(isEch).length,matieres:openAbs().length+state.subjects.filter(remDue).length};
     var h='<div class="brand">'+logo(28)+'Marge</div>'+
       '<button class="nav-item" data-act="add" style="color:var(--fg)">'+icon('plus')+'Ajout rapide</button><div class="nav-label">Pages</div>';
     VIEWS.forEach(function(v){
@@ -1485,7 +1502,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
       '<button class="nav-item" data-act="theme">'+icon(isDark()?'sun':'moon')+(isDark()?'Mode clair':'Mode sombre')+'</button></div>';
     document.getElementById('side').innerHTML=h;
     document.getElementById('tabbar').innerHTML=VIEWS.map(function(v){
-      return '<a href="#'+v.k+'"'+(view===v.k?' aria-current="page"':'')+'>'+icon(v.i,20)+v.l.replace('Aujourd\'hui','Accueil')+'</a>';
+      return '<a href="#'+v.k+'"'+(view===v.k?' aria-current="page"':'')+'>'+icon(v.i,20)+v.l.replace('Aujourd\'hui','Accueil')+(v.k==='matieres'&&counts.matieres?'<i class="pastille"></i>':'')+'</a>';
     }).join('');
     document.getElementById('theme-m').innerHTML=icon(isDark()?'sun':'moon');
     document.getElementById('brand-m').innerHTML=logo(28)+'Marge';
@@ -1501,6 +1518,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   }
   function route(){
     var h=(location.hash||'').replace('#','');
+    if(h==='absences')h='matieres';
     view=(h==='reglages'||VIEWS.some(function(v){return v.k===h}))?h:'aujourdhui';
     render();
   }
@@ -1524,7 +1542,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
 
   /* ---------- Ajout rapide ---------- */
   var modalMode='hw',editId='';
-  function subjectOptions(sel){return state.subjects.map(function(s){return '<option value="'+s.id+'"'+(s.id===sel?' selected':'')+'>'+esc(s.name)+'</option>'}).join('')}
+  function subjectOptions(sel){sel=sel||window.__sub||'';return state.subjects.map(function(s){return '<option value="'+s.id+'"'+(s.id===sel?' selected':'')+'>'+esc(s.name)+'</option>'}).join('')}
   function stepRow(x){
     x=x||{};
     return '<div class="step-row" data-sid="'+esc(x.id||'')+'"><input class="field s-title" placeholder="Ex. Regarder la vidéo" autocomplete="off" value="'+esc(x.title||'')+'">'+
@@ -1544,31 +1562,28 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var isEchM=modalMode==='ech',pk=isEchM?'cc':'devoir',isHw=modalMode==='hw'||isEchM,durs=DURS.slice(),when=editId?((!isEchM&&v.ech)?'ech':(v.when==='ech'?'date':v.when)||(v.date?(v.link?'course':'date'):'none')):'date';
     if(v.dur&&!durs.some(function(d){return d[0]===v.dur}))durs.push([v.dur,fmtDur(v.dur)]);
     var moreOpen=!!(editId&&(v.dur||v.planDate||(v.steps&&v.steps.length)||(v.remind&&v.remind!=='eve')||v.asEvent)),
-        moreSum=(v.remind==='none'?'aucun rappel':(v.asEvent?'événement':'tâche')+' Google, rappel '+(REMIND[v.remind||'eve']||'').toLowerCase());
+        moreSum=(v.remind==='none'?'sans rappel':'rappel '+(REMIND[v.remind||'eve']||'').toLowerCase());
     var body=isHw?
       '<label>Titre<input class="field" id="f-title" required placeholder="Ex. Fiche de lecture" autocomplete="off" value="'+esc(v.title||'')+'"></label>'+
       (isEchM?'<div class="two"><label>Type<select class="field" id="f-kind">'+optList(KINDS.filter(function(k){return k[0]!=='devoir'}),v.kind||'cc')+'</select></label>':'<input type="hidden" id="f-kind" value="devoir"><div class="two">')+
-      '<label>Matière<select class="field" id="f-sub">'+subjectOptions(v.sub)+'</select></label></div>'+
-      
-      '<div class="f2"><span class="hint">Pour quand ?</span><div class="seg wide" role="group" aria-label="Pour quand ?">'+(isEchM?[['date','Une date'],['course','Un cours'],['none','Sans date']]:[['date','Une date'],['course','Un cours'],['ech','Une échéance'],['none','Aucune']]).map(function(b){return '<button type="button" data-act="when" data-v="'+b[0]+'" aria-pressed="'+(when===b[0])+'">'+b[1]+'</button>'}).join('')+'</div></div>'+
+      '<label>Matière<select class="field" id="f-sub">'+subjectOptions(v.sub)+'</select></label>'+
+      (isEchM?'</div><input type="hidden" id="f-prio" value="'+(v.prio||'mid')+'">':'<label>Difficulté<select class="field" id="f-prio">'+optList([['low','Facile'],['mid','Moyen'],['high','Difficile']],v.prio||'mid')+'</select></label></div>')+
+      '<div class="f2"><div class="seg wide" role="group" aria-label="Pour quand ?">'+(isEchM?[['date','Une date'],['course','Un cours'],['none','Sans date']]:[['date','Une date'],['course','Un cours'],['ech','Une échéance'],['none','Aucune']]).map(function(b){return '<button type="button" data-act="when" data-v="'+b[0]+'" aria-pressed="'+(when===b[0])+'">'+b[1]+'</button>'}).join('')+'</div></div>'+
       '<input type="hidden" id="f-when" value="'+when+'">'+
-      '<div id="w-ech"'+(when==='ech'?'':' hidden')+'><label>Échéance<select class="field" id="f-ech">'+echOptions(v.ech,v.sub||(state.subjects[0]||{}).id)+'</select></label><p class="hint">La date limite suit l\'échéance : si elle change, le devoir suit. Seules les échéances de cette matière sont proposées.</p></div>'+
+      '<div id="w-ech"'+(when==='ech'?'':' hidden')+'><label>Échéance<select class="field" id="f-ech">'+echOptions(v.ech,v.sub||(state.subjects[0]||{}).id)+'</select></label></div>'+
       '<div id="w-date"'+(when==='date'?'':' hidden')+'><div class="two"><label>Date limite<input class="field" type="date" id="f-date"'+(when==='date'?' required':'')+' value="'+esc(v.date||tomorrow)+'"></label>'+
       '<label>Heure<input class="field" type="time" id="f-time" value="'+esc(v.time||'23:59')+'"></label></div></div>'+
-      '<div id="w-course"'+(when==='course'?'':' hidden')+'><label>Cours<select class="field" id="f-slot"></select></label><p class="hint">La date limite est celle du cours, et le devoir apparaît sur ce créneau du Planning.</p></div>'+
-      '<div id="w-none"'+(when==='none'?'':' hidden')+'><p class="hint">Rangé dans « Sans échéance ». Planifie-le avec « Je m\'y mets le » : une tâche Google est créée à cette date.</p></div>'+
-      '<label>Difficulté<select class="field" id="f-prio">'+optList([['low','Facile'],['mid','Moyen'],['high','Difficile']],v.prio||'mid')+'</select></label>'+
-      '<details class="more" id="more-opts"'+(moreOpen?' open':'')+'><summary>Plus d\'options · '+moreSum+'</summary><div class="form">'+
-      '<label>Durée visée<select class="field" id="f-dur">'+optList(durs,v.dur||0)+'</select></label>'+
+      '<div id="w-course"'+(when==='course'?'':' hidden')+'><label>Cours<select class="field" id="f-slot"></select></label></div>'+
+      '<div id="w-none"'+(when==='none'?'':' hidden')+'></div>'+
+      '<details class="more" id="more-opts"'+(moreOpen?' open':'')+'><summary>Plus d\'options <small style="color:var(--muted);font-weight:400">· '+moreSum+'</small></summary><div class="form">'+
+      '<div class="two"><label>Durée<select class="field" id="f-dur">'+optList(durs,v.dur||0)+'</select></label>'+
+      '<div id="w-remind"'+(when==='none'?' hidden':'')+'><label>Rappel<select class="field" id="f-remind">'+optList([['eve','La veille'],['d3','3 jours avant'],['same','Le matin même'],['none','Aucun rappel']],v.remind||'eve')+'</select></label></div></div>'+
+      '<input type="hidden" id="f-gmode" value="'+(v.asEvent?'event':'task')+'">'+
       '<div class="two"><label>Je m\'y mets le<input class="field" type="date" id="f-pdate" value="'+esc(v.planDate||'')+'"></label>'+
       '<label>À<input class="field" type="time" id="f-ptime" value="'+esc(v.planTime||'')+'"></label></div>'+
       '<div id="f-steps">'+((v.steps||[]).map(stepRow).join(''))+'</div>'+
-      '<button type="button" class="btn" data-act="add-step">'+icon('plus',15)+'Ajouter une sous-tâche</button>'+
-      '<p class="hint">Avec des sous-tâches (ex. regarder la vidéo, écrire le rendu), chacune a sa durée et sa date de travail ; les champs ci-dessus ne servent plus à planifier.</p>'+
-      '<p class="hint">Avec une heure, le travail prévu devient un événement dans ton agenda Google (visible dans le Planning, le temps libre se recalcule autour) ; sans heure, c\'est une tâche Google. Laisse « Je m\'y mets le » vide si tu n\'as pas encore décidé.</p>'+
-      '<div id="w-remind"'+(when==='none'?' hidden':'')+'><div class="two"><label>Rappel<select class="field" id="f-remind">'+optList([['eve','La veille'],['d3','3 jours avant'],['same','Le matin même'],['none','Aucun rappel']],v.remind||'eve')+'</select></label>'+
-      '<label>Dans Google<select class="field" id="f-gmode">'+optList([['task','Tâche (rappel le matin)'],['event','Événement (heure précise)']],v.asEvent?'event':'task')+'</select></label></div>'+
-      '<p class="hint">Une fois connecté à Google : une tâche est créée avec un rappel le matin du jour choisi, ou un événement dans ton agenda principal à l\'heure limite avec une alerte.</p></div></div></details>':
+      '<button type="button" class="btn" data-act="add-step">'+icon('plus',15)+'Sous-tâche</button>'+
+      '</div></details>':
       '<div class="two"><label>Matière<select class="field" id="f-sub">'+subjectOptions()+'</select></label>'+
       '<label>Date du cours manqué<input class="field" type="date" id="f-date" required value="'+today+'"></label></div>'+
       '<label>À récupérer<input class="field" id="f-what" required placeholder="Ex. Notes du cours et diapos" autocomplete="off"></label>'+
@@ -1728,7 +1743,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         if(changed){queueDel(cur);cur.eventId='';cur.taskId=''}
         Object.keys(data).forEach(function(k){cur[k]=data[k]});
       }else{
-        data.id=uid();data.done=false;state.homework.push(data);
+        data.id=uid();data.done=false;data.created=Date.now();state.homework.push(data);
       }
       if(isEch(data)){
         var eid=editId||data.id;
@@ -1748,6 +1763,13 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var act=el.getAttribute('data-act'),id=el.getAttribute('data-id'),val=el.getAttribute('data-v');
     if(act==='add')addChooser();
     else if(act==='add-hw')openModal('hw');
+    else if(act==='sub-add-hw'||act==='sub-add-abs'){window.__sub=id;openModal(act==='sub-add-hw'?'hw':'abs');window.__sub=''}
+    else if(act==='sub-rem')remModal(id);
+    else if(act==='rem-save'){
+      var rs=state.subjects.filter(function(x){return x.id===id})[0];
+      if(rs){var on=document.getElementById('rm-on').checked,rv=(document.querySelector('input[name=rmd]:checked')||{}).value||'7',dd=rv==='c'?(+document.getElementById('rm-n').value||7):+rv;dd=Math.max(1,Math.min(365,Math.round(dd)));
+        var was=rs.remind||{};rs.remind={on:on,days:dd,since:(on&&(!was.on||was.days!==dd))?Date.now():(was.since||0)};save()}
+      closeModal();render()}
     else if(act==='add-abs')openModal('abs');
     else if(act==='hide-go')hideGo();
     else if(act==='hidden-mgr')hiddenMgr();
