@@ -236,6 +236,17 @@ html,body{overflow-x:hidden;max-width:100vw;touch-action:pan-y;overscroll-behavi
 input,select,textarea,button{max-width:100%}
 .modal,.overlay{touch-action:pan-y}
 .form label>.field{width:100%;box-sizing:border-box}
+.opt{display:flex;flex-direction:row;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;flex-wrap:wrap}
+.form label.opt,.opt{flex-direction:row!important;align-items:center!important;text-align:left;justify-content:flex-start}
+.opt input[type=radio],.opt input[type=checkbox]{flex:none}
+.runbar{position:fixed;z-index:30;left:12px;right:12px;bottom:calc(74px + env(safe-area-inset-bottom,0px));background:#1c2733;color:#fff;border-radius:18px;padding:10px 14px;display:flex;align-items:center;gap:12px;box-shadow:var(--shadow)}
+.runbar small{display:block;font-size:12px;opacity:.75}.runbar b{font:600 20px var(--mono)}
+.runbar .stopb{margin-left:auto;width:40px;height:40px;border-radius:50%;background:#e5484d;border:0;display:grid;place-items:center;cursor:pointer}.runbar .stopb i{width:14px;height:14px;background:#fff;border-radius:3px}
+@media (min-width:860px){.runbar{left:auto;right:20px;bottom:20px;width:320px}}
+.tbar{height:10px;border-radius:6px;background:color-mix(in srgb,var(--muted) 22%,transparent);position:relative;overflow:hidden}.tbar i{position:absolute;left:0;top:0;bottom:0;border-radius:6px}
+.tline{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font:12.5px var(--mono);color:var(--muted)}
+.tdays{display:flex;gap:6px;align-items:flex-end;height:64px}.tdays div{flex:1;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:flex-end;font-size:11px;color:var(--muted);height:100%}.tdays i{width:100%;background:color-mix(in srgb,var(--accent) 55%,var(--bg));border-radius:5px 5px 0 0;display:block;min-height:2px}
+.trow{display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:14px}.trow .mono{font:12px var(--mono);color:var(--muted);white-space:nowrap}
 #tabbar a{position:relative}.pastille{position:absolute;top:4px;left:calc(50% + 8px);width:9px;height:9px;border-radius:50%;background:#e0852a;border:2px solid var(--bg)}
 @media (max-width:700px){.overlay{padding:8px}.modal{transform:none!important;width:100%;box-sizing:border-box}.modal-head{cursor:default;touch-action:auto}.step-row .three{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.step-row .three .s-dur{grid-column:1/-1}}
 .load{font-family:var(--mono);font-size:12px;color:var(--muted);padding:0 2px}
@@ -288,7 +299,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   .side{display:none}
   .main{padding-top:16px;padding-bottom:110px}
   .topbar{display:flex;align-items:center;justify-content:space-between;margin:0 auto 16px;max-width:860px}
-  .tabbar{display:grid;grid-template-columns:repeat(6,1fr);position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);
+  .tabbar{display:grid;grid-template-columns:repeat(5,1fr);position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);
     padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));z-index:20}
   .tabbar a{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;color:var(--muted);text-decoration:none;padding:4px 0;border-radius:6px;font-weight:500}
   .tabbar a[aria-current="page"]{color:var(--accent)}
@@ -417,7 +428,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   function normalize(st){
     st.settings=st.settings||{};st.settings.schoolCal=st.settings.schoolCal||'';st.settings.map=st.settings.map||{};
     st.settings.ignored=st.settings.ignored||[];st.settings.imported=st.settings.imported||'';
-    st.pendingDeletes=st.pendingDeletes||[];st.updatedAt=st.updatedAt||0;st.evOver=st.evOver||{};st.hideRules=st.hideRules||[];st.customEvents=st.customEvents||[];
+    st.pendingDeletes=st.pendingDeletes||[];st.updatedAt=st.updatedAt||0;st.evOver=st.evOver||{};st.hideRules=st.hideRules||[];st.customEvents=st.customEvents||[];st.timeLog=st.timeLog||[];st.timer=st.timer||null;
     if(st.sample){
       st.homework=(st.homework||[]).filter(function(x){return x.demo===undefined?false:!x.demo});
       st.absences=(st.absences||[]).filter(function(x){return x.demo===undefined?false:!x.demo});
@@ -968,6 +979,45 @@ a.google-btn,a.icon-btn{text-decoration:none}
       '<p class="hint" style="margin:0">Un repère « rappel » apparaît sur la tuile et sur Matières ; il disparaît dès que tu ajoutes un devoir.</p>',
       '<button type="button" class="btn" data-act="close">Annuler</button><button type="button" class="btn btn-primary" data-act="rem-save" data-id="'+s.id+'">Enregistrer</button>');
   }
+  var timeRange='week';
+  function rangeFrom(){var n=new Date();return timeRange==='month'?new Date(n.getFullYear(),n.getMonth(),1):weekStartOf(n)}
+  function timeSum(sid,from){var t=0;(state.timeLog||[]).forEach(function(e){if(e.sub===sid&&e.ts>=from.getTime())t+=e.min});return Math.round(t)}
+  function timerStop(silent){var t=state.timer;if(!t)return;var m=(Date.now()-t.start)/60000;state.timer=null;if(m>=1)state.timeLog.push({id:uid(),sub:t.sub,ts:Date.now(),min:Math.round(m),src:'chrono'});if(!silent){save();render()}}
+  function timerStart(id){timerStop(true);state.timer={sub:id,start:Date.now()};save();render()}
+  function clock(ms){var t=Math.floor(ms/1000);return pad(Math.floor(t/3600))+':'+pad(Math.floor(t/60)%60)+':'+pad(t%60)}
+  function renderRun(){
+    var el=document.getElementById('runbar'),t=state.timer;
+    if(!t){if(el)el.remove();return}
+    var u=state.subjects.filter(function(x){return x.id===t.sub})[0];
+    if(!u){state.timer=null;if(el)el.remove();return}
+    if(!el){el=document.createElement('div');el.id='runbar';el.className='runbar';document.body.appendChild(el)}
+    var key=t.sub+'|'+t.start;
+    if(el.getAttribute('data-k')!==key){el.setAttribute('data-k',key);el.innerHTML='<div style="min-width:0"><small>En cours · '+esc(u.name)+'</small><b id="rb-t"></b></div><button class="stopb" data-act="timer-stop" aria-label="Arrêter le chronomètre"><i></i></button>'}
+    var b=document.getElementById('rb-t');if(b)b.textContent=clock(Date.now()-t.start);
+  }
+  setInterval(function(){if(state.timer)renderRun()},1000);
+  function timeCard(){
+    var from=rangeFrom(),days=timeRange==='month'?new Date(from.getFullYear(),from.getMonth()+1,0).getDate():7,tot=0,maxm=1;
+    var rows=state.subjects.map(function(s){var m=timeSum(s.id,from);tot+=m;var g=s.goal?Math.round(s.goal*days/7):0;maxm=Math.max(maxm,m,g);return {s:s,m:m,g:g}});
+    var dayBars='';
+    if(timeRange==='week'){
+      var by=[0,0,0,0,0,0,0];(state.timeLog||[]).forEach(function(e){if(e.ts>=from.getTime()&&e.ts<from.getTime()+7*864e5)by[Math.min(6,Math.floor((e.ts-from.getTime())/864e5))]+=e.min});
+      var mx=Math.max.apply(null,by.concat([1])),L=['L','M','M','J','V','S','D'];
+      dayBars='<div class="tdays">'+by.map(function(v,i){return '<div><i style="height:'+Math.round(v/mx*50)+'px"></i>'+L[i]+'</div>'}).join('')+'</div>';
+    }
+    return '<div class="card"><div class="top" style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="margin:0">Temps · '+fmtDur(tot)+'</h3><div class="seg" role="group" aria-label="Période">'+[['week','Semaine'],['month','Mois']].map(function(b){return '<button type="button" data-act="time-range" data-v="'+b[0]+'" aria-pressed="'+(timeRange===b[0])+'">'+b[1]+'</button>'}).join('')+'</div></div>'+dayBars+
+      rows.map(function(r){var w=r.g?Math.min(100,r.m/r.g*100):r.m/maxm*100;return '<div class="trow"><span>'+esc(r.s.name)+'</span><div class="tbar"><i style="width:'+Math.round(w)+'%;background:'+hexOf(r.s.color)+'"></i></div><span class="mono">'+fmtDur(r.m)+(r.g?' / '+fmtDur(r.g):'')+'</span></div>'}).join('')+'</div>';
+  }
+  function goalModal(id){
+    var s=state.subjects.filter(function(x){return x.id===id})[0];if(!s)return;
+    modalShell('Objectif · '+esc(s.name),'<label>Heures par semaine<input class="field" type="number" min="0" max="80" step="0.5" id="gl-h" value="'+(s.goal?s.goal/60:'')+'" placeholder="Aucun objectif"></label><p class="hint" style="margin:0">Laisse vide pour ne pas en fixer.</p>','<button type="button" class="btn" data-act="close">Annuler</button><button type="button" class="btn btn-primary" data-act="goal-save" data-id="'+s.id+'">Enregistrer</button>');
+  }
+  function declModal(id){
+    var h=state.homework.filter(function(x){return x.id===id})[0];if(!h)return;
+    var pre=[15,30,60,90,120],d=h.dur||0,cu=!!d&&pre.indexOf(d)<0,def=d||60;
+    var radio=function(v){return '<label class="opt"><input type="radio" name="dcl" value="'+v+'"'+((!cu&&def===v)?' checked':'')+' style="width:auto;margin:0"> '+fmtDur(v)+'</label>'};
+    modalShell('Temps passé ?','<p class="hint" style="margin:0">'+esc(h.title)+' · '+esc(sub(h.sub).name)+(d?' · prévu '+fmtDur(d):'')+'</p>'+pre.map(radio).join('')+'<label class="opt"><input type="radio" name="dcl" value="c"'+(cu?' checked':'')+' style="width:auto;margin:0"> Autre <input class="field" type="number" min="1" max="1440" id="dcl-n" value="'+(cu?d:45)+'" style="width:90px"> min</label>','<button type="button" class="btn" data-act="close">Passer</button><button type="button" class="btn btn-primary" data-act="decl-save" data-id="'+h.id+'">Valider</button>');
+  }
   function hostOf(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return 'Lien'}}
   function vSubjects(){
     var cards=state.subjects.map(function(s){
@@ -981,7 +1031,9 @@ a.google-btn,a.icon-btn{text-decoration:none}
       return '<div class="card subj" style="--s:'+hexOf(s.color)+'"><h3><span class="dot" style="background:'+hexOf(s.color)+'"></span>'+esc(s.name||'Sans nom')+'</h3>'+
         '<div class="stats"><span class="tag t-'+(hw?'orange':'gray')+'">'+hw+' devoir'+(hw>1?'s':'')+'</span><span class="tag t-'+(ab?'red':'gray')+'">'+ab+' à rattraper</span>'+
           (s.remind&&s.remind.on?'<span class="tag t-'+(remDue(s)?'orange':'gray')+'">'+(remDue(s)?'rappel · aucun devoir depuis '+remDue(s)+' j':'rappel · '+s.remind.days+' j')+'</span>':'')+'</div>'+
-        '<div class="actions"><button class="btn btn-primary" data-act="sub-add-hw" data-id="'+s.id+'">'+icon('plus',15)+'Devoir</button><button class="btn" data-act="sub-add-abs" data-id="'+s.id+'">'+icon('plus',15)+'Absence</button><button class="btn" data-act="sub-rem" data-id="'+s.id+'">Rappel</button></div>'+
+        '<div class="tbar"><i style="width:'+(s.goal?Math.min(100,timeSum(s.id,weekStartOf(new Date()))/s.goal*100):0)+'%;background:'+hexOf(s.color)+'"></i></div>'+
+        '<div class="tline"><button class="linkbtn" data-act="sub-goal" data-id="'+s.id+'">cette semaine · '+fmtDur(timeSum(s.id,weekStartOf(new Date())))+(s.goal?' / objectif '+fmtDur(s.goal):' · fixer un objectif')+'</button></div>'+
+        '<div class="actions"><button class="btn btn-primary" data-act="'+(state.timer&&state.timer.sub===s.id?'timer-stop':'timer-start')+'" data-id="'+s.id+'">'+(state.timer&&state.timer.sub===s.id?'■ Arrêter':'▶ Démarrer')+'</button><button class="btn" data-act="sub-add-hw" data-id="'+s.id+'">'+icon('plus',15)+'Devoir</button><button class="btn" data-act="sub-add-abs" data-id="'+s.id+'">'+icon('plus',15)+'Absence</button><button class="btn" data-act="sub-rem" data-id="'+s.id+'">Rappel</button></div>'+
         (state.absences.some(function(a){return a.sub===s.id})?'<details class="colordd card-det" data-sub-det="ab-'+s.id+'"'+(openSubs['ab-'+s.id]?' open':'')+'><summary>Absences ('+state.absences.filter(function(a){return a.sub===s.id}).length+')</summary><div class="rows">'+state.absences.filter(function(a){return a.sub===s.id}).sort(function(a,b){return (a.state==='done'?1:0)-(b.state==='done'?1:0)||(a.date<b.date?1:-1)}).map(absRow).join('')+'</div></details>':'')+
         '<div class="actions">'+[s.drive,s.link2].map(function(u,i){return /^https:\/\//.test(u||'')?'<a class="btn" href="'+esc(u)+'" target="_blank" rel="noopener">'+esc(hostOf(u))+'</a>':''}).join('')+'</div>'+
         '<details class="colordd card-det" data-sub-det="'+s.id+'"'+(openSubs[s.id]?' open':'')+'><summary>Modifier</summary>'+
@@ -994,7 +1046,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
         '<div class="actions"><button class="btn" data-act="del-sub" data-id="'+s.id+'">'+(armedSub===s.id?'Confirmer la suppression':'Supprimer la matière')+'</button></div>'+
         '</details></div>';
     }).join('');
-    return sampleBanner()+head('Matières','Devoirs, absences à rattraper et rappel par matière.','Nouvelle matière','add-sub')+'<div class="cards">'+(cards||'<div class="empty">Aucune matière. Utilise « Nouvelle matière ».</div>')+'</div>';
+    return sampleBanner()+head('Matières','Devoirs, absences à rattraper et rappel par matière.','Nouvelle matière','add-sub')+timeCard()+'<div class="cards">'+(cards||'<div class="empty">Aucune matière. Utilise « Nouvelle matière ».</div>')+'</div>';
   }
 
   function vSettings(){
@@ -1513,7 +1565,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     var f={aujourdhui:vToday,devoirs:vHomework,echeances:vEch,absences:vAbsences,planning:vPlanning,matieres:vSubjects,reglages:vSettings};
     var focusId=document.activeElement&&document.activeElement.id;
     var pg=document.getElementById('page');pg.classList.toggle('wide',view==='planning');pg.innerHTML=(f[view]||vToday)();
-    renderSide();
+    renderSide();renderRun();
     if(focusId&&/^p-/.test(focusId)){var el=document.getElementById(focusId);if(el)el.focus()}
   }
   function route(){
@@ -1765,6 +1817,13 @@ a.google-btn,a.icon-btn{text-decoration:none}
     else if(act==='add-hw')openModal('hw');
     else if(act==='sub-add-hw'||act==='sub-add-abs'){window.__sub=id;openModal(act==='sub-add-hw'?'hw':'abs');window.__sub=''}
     else if(act==='sub-rem')remModal(id);
+    else if(act==='timer-start')timerStart(id);
+    else if(act==='timer-stop'){timerStop()}
+    else if(act==='time-range'){timeRange=val;render()}
+    else if(act==='sub-goal')goalModal(id);
+    else if(act==='goal-save'){var gs=state.subjects.filter(function(x){return x.id===id})[0],gv=parseFloat(document.getElementById('gl-h').value);if(gs){gs.goal=gv>0?Math.round(gv*60):0;save()}closeModal();render()}
+    else if(act==='decl-save'){var dh=state.homework.filter(function(x){return x.id===id})[0],dv=(document.querySelector('input[name=dcl]:checked')||{}).value||'60',dm2=dv==='c'?(+document.getElementById('dcl-n').value||0):+dv;
+      if(dh&&dm2>0){state.timeLog=state.timeLog.filter(function(e){return !(e.hw===id&&e.src==='decl')});state.timeLog.push({id:uid(),sub:dh.sub,hw:id,ts:Date.now(),min:dm2,src:'decl'});save()}closeModal();render()}
     else if(act==='rem-save'){
       var rs=state.subjects.filter(function(x){return x.id===id})[0];
       if(rs){var on=document.getElementById('rm-on').checked,rv=(document.querySelector('input[name=rmd]:checked')||{}).value||'7',dd=rv==='c'?(+document.getElementById('rm-n').value||7):+rv;dd=Math.max(1,Math.min(365,Math.round(dd)));
@@ -1808,7 +1867,10 @@ a.google-btn,a.icon-btn{text-decoration:none}
     }
     else if(act==='edit-hw'){var eh=state.homework.filter(function(x){return x.id===id})[0];openModal(eh&&isEch(eh)?'ech':'hw',id)}
     else if(act==='theme')toggleTheme();
-    else if(act==='toggle-hw'){state.homework.forEach(function(h){if(h.id===id){h.done=!h.done;(h.steps||[]).forEach(function(x){x.done=h.done})}});afterChange();render()}
+    else if(act==='toggle-hw'){var nowDone=false,hk=null;state.homework.forEach(function(h){if(h.id===id){h.done=!h.done;nowDone=h.done;hk=h;(h.steps||[]).forEach(function(x){x.done=h.done})}});
+      if(!nowDone)state.timeLog=(state.timeLog||[]).filter(function(e){return !(e.hw===id&&e.src==='decl')});
+      afterChange();render();
+      if(nowDone&&hk&&!isEch(hk)&&!state.timeLog.some(function(e){return e.hw===id}))declModal(id)}
     else if(act==='toggle-step'){state.homework.forEach(function(h){if(h.id===id){(h.steps||[]).forEach(function(x){if(x.id===val)x.done=!x.done});h.done=!!(h.steps&&h.steps.length&&h.steps.every(function(x){return x.done}))}});afterChange();render()}
     else if(act==='add-step'){var box=document.getElementById('f-steps');if(box){box.insertAdjacentHTML('beforeend',stepRow());var ins=box.querySelectorAll('.s-title');ins[ins.length-1].focus()}}
     else if(act==='filter-sub'){hwSub=id;if(location.hash==='#devoirs')render()}
