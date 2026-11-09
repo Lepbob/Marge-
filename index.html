@@ -9,8 +9,8 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Marge</title>
-<script>(function(){try{var q=location.search.match(/[?&]labs=([01])/);if(q){if(q[1]==='1')localStorage.setItem('marge-labs','1');else{localStorage.removeItem('marge-labs');localStorage.removeItem('marge-skin')}}
-var k=localStorage.getItem('marge-skin');if(localStorage.getItem('marge-labs')&&k&&k!=='ardoise')document.documentElement.setAttribute('data-skin',k)}catch(e){}})();</script>
+<script>(function(){try{var q=location.search.match(/[?&]labs=([01])/);if(q){if(q[1]==='1')localStorage.setItem('marge-labs','1');else{localStorage.removeItem('marge-labs')}}
+var k=localStorage.getItem('marge-skin');if(k&&k!=='ardoise')document.documentElement.setAttribute('data-skin',k)}catch(e){}})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -1106,14 +1106,15 @@ a.google-btn,a.icon-btn{text-decoration:none}
       html+='<div class="panel"><h2>Renouvellement automatique</h2><p class="hint">Google coupe l\'accès à l\'agenda au bout d\'une heure. Avec l\'identifiant client Web de ton projet, l\'appli le renouvelle toute seule au premier toucher après l\'ouverture.</p><div class="setrow"><label for="set-gcid">Identifiant client Web</label><input class="field" id="set-gcid" style="flex:1;min-width:200px" placeholder="123456-abc.apps.googleusercontent.com" value="'+esc(state.settings.gClientId||'')+'" autocomplete="off"></div></div>'+
         '<div class="panel"><h2>Google Agenda</h2>'+body+(cloud.calError?'<div class="err">'+esc(cloud.calError)+'</div>':'')+'</div>'+backupPanel();
     }
-    if(labsOn())html+=skinPanel();
+    html+=skinPanel();
     return html;
   }
+  try{var ss=state.settings&&state.settings.skin;if(ss&&!localStorage.getItem('marge-skin')){localStorage.setItem('marge-skin',ss);if(ss!=='ardoise')document.documentElement.setAttribute('data-skin',ss)}}catch(e){}
   function labsOn(){try{return !!localStorage.getItem('marge-labs')}catch(e){return false}}
   var SKINS=[['ardoise','Ardoise','#eef2f6'],['papier','Papier','#f6efe3'],['contraste','Contraste','#ffffff']];
   function curSkin(){return document.documentElement.getAttribute('data-skin')||'ardoise'}
   function skinPanel(){var c=curSkin();
-    return '<div class="panel"><h2>Thèmes (test)</h2><p class="hint">Fonction en test, visible uniquement sur cet appareil. Le mode clair ou sombre se règle avec le bouton lune/soleil.</p><div class="skinpick">'+SKINS.map(function(k){return '<button data-act="skin" data-id="'+k[0]+'" aria-pressed="'+(c===k[0])+'"><i style="background:'+k[2]+(k[0]==='contraste'?';border:3px solid #000':'')+'"></i>'+k[1]+'</button>'}).join('')+'</div></div>'}
+    return '<div class="panel"><h2>Thème</h2><p class="hint">Choisis l\'apparence de l\'appli. Le mode clair ou sombre se règle avec le bouton lune/soleil.</p><div class="skinpick">'+SKINS.map(function(k){return '<button data-act="skin" data-id="'+k[0]+'" aria-pressed="'+(c===k[0])+'"><i style="background:'+k[2]+(k[0]==='contraste'?';border:3px solid #000':'')+'"></i>'+k[1]+'</button>'}).join('')+'</div></div>'}
   function setSkin(k){var r=document.documentElement;if(k==='ardoise')r.removeAttribute('data-skin');else r.setAttribute('data-skin',k);
     try{localStorage.setItem('marge-skin',k)}catch(e){}
     state.settings.skin=k;save();syncThemeColor();render()}
