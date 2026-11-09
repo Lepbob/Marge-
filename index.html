@@ -9,6 +9,8 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>Marge</title>
+<script>(function(){try{var q=location.search.match(/[?&]labs=([01])/);if(q){if(q[1]==='1')localStorage.setItem('marge-labs','1');else{localStorage.removeItem('marge-labs');localStorage.removeItem('marge-skin')}}
+var k=localStorage.getItem('marge-skin');if(localStorage.getItem('marge-labs')&&k&&k!=='ardoise')document.documentElement.setAttribute('data-skin',k)}catch(e){}})();</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
 <style>
 :root{
@@ -45,6 +47,33 @@
   --shadow:0 8px 30px rgba(0,0,0,.6);
   color-scheme:dark;
 }
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:400;font-display:swap;src:url(fonts/newsreader-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-style:italic;font-weight:400;font-display:swap;src:url(fonts/newsreader-latin-400-italic.woff2) format("woff2")}
+@font-face{font-family:"Newsreader";font-style:normal;font-weight:600;font-display:swap;src:url(fonts/newsreader-latin-600-normal.woff2) format("woff2")}
+:root[data-skin=papier]{--bg:#f6efe3;--bg-soft:#efe6d5;--bg-hover:#e6dac4;--fg:#2a211b;--muted:#6f5b43;--line:#d6c8ae;--accent:#9c2f2f;--accent-soft:#f1dcd3;--on-accent:#fbf6ec;--amber:#c98a1b;--hi:#a8322a;--mid:#b9770e;--lo:#4f7d4a;--alert:#a8322a;--red-bg:#f1d2c8;--red-fg:#7a2018;--orange-bg:#f0dbb6;--orange-fg:#6e4106;--green-bg:#dbe3c4;--green-fg:#37521f;--blue-bg:#d6dfe0;--blue-fg:#2f4c55;--purple-bg:#e6d8e2;--purple-fg:#582f4e;--gray-bg:#e8dfcf;--gray-fg:#4d4032;--shadow:0 8px 30px rgba(60,40,20,.2);--display:"Newsreader",Georgia,"Times New Roman",serif}
+@media (prefers-color-scheme: dark){:root[data-skin=papier]:not([data-theme="light"]){--bg:#1d1814;--bg-soft:#26201a;--bg-hover:#33291f;--fg:#efe5d3;--muted:#b29a7c;--line:#4a3f33;--accent:#f0997a;--accent-soft:#3b2a22;--on-accent:#1d1814;--amber:#e0b060;--hi:#f0997a;--mid:#e5b455;--lo:#9ccc8a;--alert:#f0997a;--red-bg:#58281f;--red-fg:#ffd0c2;--orange-bg:#573a17;--orange-fg:#f5d8a8;--green-bg:#2d4126;--green-fg:#cfe6c0;--blue-bg:#2a3d44;--blue-fg:#cbe3e8;--purple-bg:#44304a;--purple-fg:#e8d3ef;--gray-bg:#332b22;--gray-fg:#dccfb9;--shadow:0 8px 30px rgba(0,0,0,.6);--color-scheme:dark}}
+:root[data-skin=papier][data-theme="dark"]{--bg:#1d1814;--bg-soft:#26201a;--bg-hover:#33291f;--fg:#efe5d3;--muted:#b29a7c;--line:#4a3f33;--accent:#f0997a;--accent-soft:#3b2a22;--on-accent:#1d1814;--amber:#e0b060;--hi:#f0997a;--mid:#e5b455;--lo:#9ccc8a;--alert:#f0997a;--red-bg:#58281f;--red-fg:#ffd0c2;--orange-bg:#573a17;--orange-fg:#f5d8a8;--green-bg:#2d4126;--green-fg:#cfe6c0;--blue-bg:#2a3d44;--blue-fg:#cbe3e8;--purple-bg:#44304a;--purple-fg:#e8d3ef;--gray-bg:#332b22;--gray-fg:#dccfb9;--shadow:0 8px 30px rgba(0,0,0,.6);--color-scheme:dark}
+:root[data-skin=contraste]{--bg:#ffffff;--bg-soft:#f0f0f0;--bg-hover:#dcdcdc;--fg:#000000;--muted:#333333;--line:#000000;--accent:#0044ff;--accent-soft:#dbe4ff;--on-accent:#ffffff;--amber:#ffd400;--hi:#c00000;--mid:#8a5a00;--lo:#006b2e;--alert:#c00000;--tint:30%;--red-bg:#ffd0d0;--red-fg:#600000;--orange-bg:#ffe0a8;--orange-fg:#4a2800;--green-bg:#c4f0d0;--green-fg:#003d18;--blue-bg:#cfe0ff;--blue-fg:#00226b;--purple-bg:#e8d8ff;--purple-fg:#2e0a66;--gray-bg:#e4e4e4;--gray-fg:#111111;--shadow:0 0 0 3px #000}
+@media (prefers-color-scheme: dark){:root[data-skin=contraste]:not([data-theme="light"]){--bg:#000000;--bg-soft:#111111;--bg-hover:#262626;--fg:#ffffff;--muted:#dddddd;--line:#ffffff;--accent:#5cc8ff;--accent-soft:#06304a;--on-accent:#000000;--amber:#ffd400;--hi:#ff8a8a;--mid:#ffd400;--lo:#6bf0a0;--alert:#ff8a8a;--tint:30%;--red-bg:#5a0e10;--red-fg:#ffd0d0;--orange-bg:#5a3300;--orange-fg:#ffe0a8;--green-bg:#0b4a20;--green-fg:#c4f0d0;--blue-bg:#08355a;--blue-fg:#cfe8ff;--purple-bg:#3a1a66;--purple-fg:#e8d8ff;--gray-bg:#2a2a2a;--gray-fg:#f0f0f0;--shadow:0 0 0 3px #fff;--color-scheme:dark}}
+:root[data-skin=contraste][data-theme="dark"]{--bg:#000000;--bg-soft:#111111;--bg-hover:#262626;--fg:#ffffff;--muted:#dddddd;--line:#ffffff;--accent:#5cc8ff;--accent-soft:#06304a;--on-accent:#000000;--amber:#ffd400;--hi:#ff8a8a;--mid:#ffd400;--lo:#6bf0a0;--alert:#ff8a8a;--tint:30%;--red-bg:#5a0e10;--red-fg:#ffd0d0;--orange-bg:#5a3300;--orange-fg:#ffe0a8;--green-bg:#0b4a20;--green-fg:#c4f0d0;--blue-bg:#08355a;--blue-fg:#cfe8ff;--purple-bg:#3a1a66;--purple-fg:#e8d8ff;--gray-bg:#2a2a2a;--gray-fg:#f0f0f0;--shadow:0 0 0 3px #fff;--color-scheme:dark}
+/* Papier : angles vifs */
+:root[data-skin=papier] :is(.btn,.seg,.statebtn,.chip,.tag,.pill,.echchip,select.field,input.field,textarea.field,.card,.panel,.modal,.ev,.row.hw,.more,.opt,.step-row,.nav-item,.google-btn,.sample,.echbar,.runbar,.tl,.free-chip,.ghostchip){border-radius:2px}
+:root[data-skin=papier] .seg button{border-radius:0}
+:root[data-skin=papier] h2,:root[data-skin=papier] .page-head h1{font-weight:600;letter-spacing:-.01em}
+:root[data-skin=papier] .page-head h1{font-size:38px}
+/* Contraste élevé : gros traits, texte plus lourd */
+:root[data-skin=contraste]{font-weight:600}
+:root[data-skin=contraste] :is(.btn,.seg,.statebtn,.chip,.tag,.pill,.echchip,select.field,input.field,textarea.field,.card,.panel,.modal,.ev,.row.hw,.more,.opt,.step-row,.nav-item,.google-btn,.sample,.echbar,.runbar,.tl,.free-chip,.ghostchip){border:3px solid var(--line);border-radius:10px}
+:root[data-skin=contraste] .btn,:root[data-skin=contraste] .nav-item,:root[data-skin=contraste] h2{font-weight:800}
+:root[data-skin=contraste] .page-head h1{font-weight:900}
+:root[data-skin=contraste] .seg button{font-weight:800;padding:8px 14px}
+:root[data-skin=contraste] .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+:root[data-skin=contraste] .hint,:root[data-skin=contraste] small{color:var(--fg)}
+:root[data-skin=contraste] :focus-visible{outline:4px solid var(--accent);outline-offset:2px}
+.skinpick{display:flex;gap:8px}
+.skinpick button{flex:1;border:2px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:8px;font:inherit;font-weight:700;cursor:pointer;text-align:center}
+.skinpick button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.skinpick i{display:block;height:38px;border-radius:6px;margin-bottom:6px;border:1px solid rgba(0,0,0,.25)}
 *{box-sizing:border-box}
 .colordd summary{display:inline-flex;align-items:center;gap:8px;cursor:pointer;color:var(--muted);font-size:13.5px;list-style:none;padding:3px 5px;border-radius:6px}
 .colordd summary::-webkit-details-marker{display:none}
@@ -1077,8 +1106,17 @@ a.google-btn,a.icon-btn{text-decoration:none}
       html+='<div class="panel"><h2>Renouvellement automatique</h2><p class="hint">Google coupe l\'accès à l\'agenda au bout d\'une heure. Avec l\'identifiant client Web de ton projet, l\'appli le renouvelle toute seule au premier toucher après l\'ouverture.</p><div class="setrow"><label for="set-gcid">Identifiant client Web</label><input class="field" id="set-gcid" style="flex:1;min-width:200px" placeholder="123456-abc.apps.googleusercontent.com" value="'+esc(state.settings.gClientId||'')+'" autocomplete="off"></div></div>'+
         '<div class="panel"><h2>Google Agenda</h2>'+body+(cloud.calError?'<div class="err">'+esc(cloud.calError)+'</div>':'')+'</div>'+backupPanel();
     }
+    if(labsOn())html+=skinPanel();
     return html;
   }
+  function labsOn(){try{return !!localStorage.getItem('marge-labs')}catch(e){return false}}
+  var SKINS=[['ardoise','Ardoise','#eef2f6'],['papier','Papier','#f6efe3'],['contraste','Contraste','#ffffff']];
+  function curSkin(){return document.documentElement.getAttribute('data-skin')||'ardoise'}
+  function skinPanel(){var c=curSkin();
+    return '<div class="panel"><h2>Thèmes (test)</h2><p class="hint">Fonction en test, visible uniquement sur cet appareil. Le mode clair ou sombre se règle avec le bouton lune/soleil.</p><div class="skinpick">'+SKINS.map(function(k){return '<button data-act="skin" data-id="'+k[0]+'" aria-pressed="'+(c===k[0])+'"><i style="background:'+k[2]+(k[0]==='contraste'?';border:3px solid #000':'')+'"></i>'+k[1]+'</button>'}).join('')+'</div></div>'}
+  function setSkin(k){var r=document.documentElement;if(k==='ardoise')r.removeAttribute('data-skin');else r.setAttribute('data-skin',k);
+    try{localStorage.setItem('marge-skin',k)}catch(e){}
+    state.settings.skin=k;save();syncThemeColor();render()}
 
   /* ---------- Firebase et Google Agenda ---------- */
   var FB_CONFIG={apiKey:"AIzaSyCt33gcJivvoXquByudlqu-mJ1C66uVGHw",authDomain:"app-fac-e6097.firebaseapp.com",projectId:"app-fac-e6097",storageBucket:"app-fac-e6097.firebasestorage.app",messagingSenderId:"64356787231",appId:"1:64356787231:web:ae288ae554f759ed5ae12a"};
@@ -1582,7 +1620,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     return window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches;
   }
   try{var tv=localStorage.getItem(THEME_KEY);if(tv)document.documentElement.setAttribute('data-theme',tv)}catch(e){}
-  function syncThemeColor(){var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',isDark()?'#161c23':'#f6f8fa')}
+  function syncThemeColor(){var m=document.querySelector('meta[name="theme-color"]');if(!m)return;var k=document.documentElement.getAttribute('data-skin'),d=isDark();m.setAttribute('content',k==='papier'?(d?'#1d1814':'#f6efe3'):k==='contraste'?(d?'#000000':'#ffffff'):(d?'#161c23':'#f6f8fa'))}
   syncThemeColor();
   try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',syncThemeColor)}catch(e){}
   function toggleTheme(){
@@ -1867,6 +1905,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     }
     else if(act==='edit-hw'){var eh=state.homework.filter(function(x){return x.id===id})[0];openModal(eh&&isEch(eh)?'ech':'hw',id)}
     else if(act==='theme')toggleTheme();
+    else if(act==='skin')setSkin(id);
     else if(act==='toggle-hw'){var nowDone=false,hk=null;state.homework.forEach(function(h){if(h.id===id){h.done=!h.done;nowDone=h.done;hk=h;(h.steps||[]).forEach(function(x){x.done=h.done})}});
       if(!nowDone)state.timeLog=(state.timeLog||[]).filter(function(e){return !(e.hw===id&&e.src==='decl')});
       afterChange();render();
