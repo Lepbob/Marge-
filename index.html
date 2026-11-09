@@ -70,6 +70,9 @@ var k=localStorage.getItem('marge-skin');if(k&&k!=='ardoise')document.documentEl
 :root[data-skin=contraste] .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 :root[data-skin=contraste] .hint,:root[data-skin=contraste] small{color:var(--fg)}
 :root[data-skin=contraste] :focus-visible{outline:4px solid var(--accent);outline-offset:2px}
+.news{display:flex;flex-direction:column;gap:16px;max-height:60vh;overflow:auto}
+.news-v h3{margin:0 0 6px;font-size:15px}
+.news-v ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:14px}
 .skinpick{display:flex;gap:8px}
 .skinpick button{flex:1;border:2px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;padding:8px;font:inherit;font-weight:700;cursor:pointer;text-align:center}
 .skinpick button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
@@ -1110,11 +1113,18 @@ a.google-btn,a.icon-btn{text-decoration:none}
     return html;
   }
   try{var ss=state.settings&&state.settings.skin;if(ss&&!localStorage.getItem('marge-skin')){localStorage.setItem('marge-skin',ss);if(ss!=='ardoise')document.documentElement.setAttribute('data-skin',ss)}}catch(e){}
+  var NEWS=[
+    {v:'34',d:'9 novembre 2026',t:['Trois thèmes au choix : Ardoise, Papier (serif, ambiance cahier) et Contraste élevé','Chacun existe en clair et en sombre : choisis-le dans Réglages, section Thème']},
+    {v:'33',d:'9 novembre 2026',t:['Chronomètre par matière : lance-le quand tu travailles, ou déclare ton temps après coup','Fixe un objectif d\'heures par semaine pour chaque matière et suis ta progression','Le temps passé s\'affiche par semaine et par mois']},
+    {v:'31',d:'8 novembre 2026',t:['Rappel par matière : une pastille sur Matières te signale quand il est temps d\'y revenir','Matières regroupe désormais tes absences, avec leurs boutons + Devoir et + Absence','Formulaire de devoir allégé : une seule question « Pour quand ? » et les options avancées repliées']},
+    {v:'30',d:'8 novembre 2026',t:['L\'appli ne « flotte » plus sur téléphone après un zoom : le zoom par pincement est désactivé']}
+  ];
+  function newsModal(){modalShell('Nouveautés','<div class="news">'+NEWS.map(function(n){return '<div class="news-v"><h3>'+esc(n.d)+'</h3><ul>'+n.t.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul></div>'}).join('')+'</div>','<button type="button" class="btn btn-primary" data-act="close">Fermer</button>')}
   function labsOn(){try{return !!localStorage.getItem('marge-labs')}catch(e){return false}}
   var SKINS=[['ardoise','Ardoise','#eef2f6'],['papier','Papier','#f6efe3'],['contraste','Contraste','#ffffff']];
   function curSkin(){return document.documentElement.getAttribute('data-skin')||'ardoise'}
   function skinPanel(){var c=curSkin();
-    return '<div class="panel"><h2>Thème</h2><p class="hint">Choisis l\'apparence de l\'appli. Le mode clair ou sombre se règle avec le bouton lune/soleil.</p><div class="skinpick">'+SKINS.map(function(k){return '<button data-act="skin" data-id="'+k[0]+'" aria-pressed="'+(c===k[0])+'"><i style="background:'+k[2]+(k[0]==='contraste'?';border:3px solid #000':'')+'"></i>'+k[1]+'</button>'}).join('')+'</div></div>'}
+    return '<div class="panel"><h2>Thème</h2><p class="hint">Choisis l\'apparence de l\'appli. Le mode clair ou sombre se règle avec le bouton lune/soleil.</p><div class="skinpick">'+SKINS.map(function(k){return '<button data-act="skin" data-id="'+k[0]+'" aria-pressed="'+(c===k[0])+'"><i style="background:'+k[2]+(k[0]==='contraste'?';border:3px solid #000':'')+'"></i>'+k[1]+'</button>'}).join('')+'</div><div><button class="btn" data-act="news">Nouveautés</button></div></div>'}
   function setSkin(k){var r=document.documentElement;if(k==='ardoise')r.removeAttribute('data-skin');else r.setAttribute('data-skin',k);
     try{localStorage.setItem('marge-skin',k)}catch(e){}
     state.settings.skin=k;save();syncThemeColor();render()}
@@ -1906,6 +1916,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
     }
     else if(act==='edit-hw'){var eh=state.homework.filter(function(x){return x.id===id})[0];openModal(eh&&isEch(eh)?'ech':'hw',id)}
     else if(act==='theme')toggleTheme();
+    else if(act==='news')newsModal();
     else if(act==='skin')setSkin(id);
     else if(act==='toggle-hw'){var nowDone=false,hk=null;state.homework.forEach(function(h){if(h.id===id){h.done=!h.done;nowDone=h.done;hk=h;(h.steps||[]).forEach(function(x){x.done=h.done})}});
       if(!nowDone)state.timeLog=(state.timeLog||[]).filter(function(e){return !(e.hw===id&&e.src==='decl')});
