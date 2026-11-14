@@ -207,7 +207,8 @@ select.field,input.field,textarea.field{border:1px solid var(--line);background:
 .tl .ev{position:absolute;overflow:hidden;margin:0;padding:4px 7px;font-size:12px;z-index:2;gap:0}
 .tl .ev b{font-size:12.5px;line-height:1.25}
 .tl .ev .t{font-size:11px}
-.tl .ev.plan{z-index:3}
+.tl .ev.plan{z-index:3;cursor:pointer}
+.tl .ev.plan.open{height:auto!important;min-height:0;overflow:visible;z-index:7;box-shadow:var(--shadow);background:color-mix(in srgb,var(--s) 22%,var(--bg))}
 .tl .free{position:absolute;left:0;right:0;border-radius:8px;display:grid;place-items:center;font:500 11.5px var(--mono);color:var(--accent);background:repeating-linear-gradient(135deg,var(--accent-soft) 0 6px,transparent 6px 12px);border:1px dashed color-mix(in srgb,var(--accent) 50%,transparent)}
 .nowline{position:absolute;left:-4px;right:0;border-top:2px solid var(--alert);z-index:4}
 .free-chip{border:1px dashed color-mix(in srgb,var(--accent) 50%,transparent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:4px 9px;font:500 12px var(--mono);text-align:center}
@@ -959,7 +960,8 @@ a.google-btn,a.icon-btn{text-decoration:none}
       });
       timedPlans.forEach(function(it){
         var s0=toMin(it.planTime),d0=it.dur||60,ov=evs.some(function(c){return c.s<s0+d0&&c.f>s0});
-        blocks+='<div class="ev plan" style="--s:'+hexOf(sub(it.h.sub).color)+';top:'+yOf(s0)+'px;height:'+(yOf(s0+d0)-yOf(s0)-2)+'px;'+(ov?'left:12%;width:calc(88% - 2px)':'left:0;width:calc(100% - 2px)')+'"><span class="t">À faire · '+it.planTime+'</span><b>'+esc(it.title)+'</b></div>';
+        var pk='P|'+di+'|'+it.h.id+'|'+(it.sid||''),po=!!openEv[pk];
+        blocks+='<div class="ev plan'+(po?' open':'')+'" data-act="exp-ev" data-key="'+esc(pk)+'" aria-expanded="'+po+'" style="--s:'+hexOf(sub(it.h.sub).color)+';top:'+yOf(s0)+'px;height:'+(yOf(s0+d0)-yOf(s0)-2)+'px;'+(ov?'left:12%;width:calc(88% - 2px)':'left:0;width:calc(100% - 2px)')+'"><span class="t">À faire · '+it.planTime+(it.dur?' · '+fmtDur(it.dur):'')+'</span><b>'+esc(it.title)+'</b>'+(po?'<span class="t">'+esc(sub(it.h.sub).name)+(it.sid?' · '+esc(it.h.title):'')+'</span>':'')+'</div>';
       });
       if(isToday&&weekOffset===0){var nm=now.getHours()*60+now.getMinutes();if(nm>=t0&&nm<=t1)blocks+='<div class="nowline" style="top:'+yOf(nm)+'px"></div>'}
       tls+='<div class="'+cls+'"><div class="tl" style="height:'+TH+'px">'+blocks+'</div></div>';
@@ -1114,6 +1116,7 @@ a.google-btn,a.icon-btn{text-decoration:none}
   }
   try{var ss=state.settings&&state.settings.skin;if(ss&&!localStorage.getItem('marge-skin')){localStorage.setItem('marge-skin',ss);if(ss!=='ardoise')document.documentElement.setAttribute('data-skin',ss)}}catch(e){}
   var NEWS=[
+    {v:'36',d:'14 novembre 2026',t:['Planning : touche une tâche « À faire » courte pour la déplier et lire son titre en entier']},
     {v:'34',d:'9 novembre 2026',t:['Trois thèmes au choix : Ardoise, Papier (serif, ambiance cahier) et Contraste élevé','Chacun existe en clair et en sombre : choisis-le dans Réglages, section Thème']},
     {v:'33',d:'9 novembre 2026',t:['Chronomètre par matière : lance-le quand tu travailles, ou déclare ton temps après coup','Fixe un objectif d\'heures par semaine pour chaque matière et suis ta progression','Le temps passé s\'affiche par semaine et par mois']},
     {v:'31',d:'8 novembre 2026',t:['Rappel par matière : une pastille sur Matières te signale quand il est temps d\'y revenir','Matières regroupe désormais tes absences, avec leurs boutons + Devoir et + Absence','Formulaire de devoir allégé : une seule question « Pour quand ? » et les options avancées repliées']},

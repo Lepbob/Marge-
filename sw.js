@@ -1,6 +1,6 @@
 // Service worker : permet d'ouvrir l'appli sans connexion.
 // Changer le numéro de version à chaque mise à jour pour forcer le rechargement.
-const VERSION = 'studia-v35';
+const VERSION = 'studia-v36';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png','./fonts/newsreader-latin-400-normal.woff2','./fonts/newsreader-latin-400-italic.woff2','./fonts/newsreader-latin-600-normal.woff2'];
 
 self.addEventListener('install', e => {
